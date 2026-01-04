@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    >
+    <EditText
+        android:id="@+id/etEmail"
+        android:layout_width="200dp"
+        android:textSize="30sp"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:hint="email">
+
+    </EditText>
+
+    <EditText
+        android:id="@+id/etPass"
+        android:layout_width="200dp"
+        android:textSize="30sp"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:hint="password"
+        android:password="true"
+        >
+
+
+
+    </EditText>
+    <EditText
+        android:id="@+id/etFirstname"
+        android:layout_width="200dp"
+        android:textSize="30sp"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:hint="first name">
+
+    </EditText>
+    <EditText
+        android:id="@+id/etLastname"
+        android:layout_width="200dp"
+        android:textSize="30sp"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:hint="last name">
+
+    </EditText>
+    <EditText
+        android:id="@+id/etAge"
+        android:layout_width="200dp"
+        android:textSize="30sp"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:hint="age">
+
+    </EditText>
+
+    <Spinner
+        android:id="@+id/spinnerGender"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:entries="@array/gender_array" />
+
+
+    <Button
+        android:id="@+id/btnPickImage"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="Pick Profile Image" />
+
+    <ImageView
+        android:id="@+id/ivProfilePreview"
+        android:layout_width="71dp"
+        android:layout_height="58dp"
+        android:contentDescription="Profile preview"
+        android:scaleType="centerCrop"
+        android:src="@android:drawable/ic_menu_gallery"
+        android:visibility="visible" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRegister"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:gravity="center"
+        android:text="register"
+        android:textSize="20sp"
+        android:padding="12dp"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        />
+
+</LinearLayout>
