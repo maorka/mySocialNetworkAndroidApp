@@ -16,7 +16,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,7 +33,6 @@ import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +68,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         TextView tvLikesCount = view.findViewById(R.id.tvLikesCount);
 
         LinearLayout commentsSection = view.findViewById(R.id.commentsSection);
-        ListView lvComments = view.findViewById(R.id.lvComments);
+        LinearLayout llCommentsContainer = view.findViewById(R.id.llCommentsContainer);
         TextView tvLoginToComment = view.findViewById(R.id.tvLoginToComment);
         LinearLayout addCommentLayout = view.findViewById(R.id.addCommentLayout);
 
@@ -100,7 +98,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
             tvBody.setText(temp.body);
             tvBody.setVisibility(View.VISIBLE);
             commentsSection.setVisibility(View.VISIBLE);
-            setupComments(lvComments, temp.key, currentUser, tvLoginToComment, addCommentLayout);
+            setupComments(llCommentsContainer, temp.key, currentUser, tvLoginToComment, addCommentLayout);
         } else {
             tvBody.setVisibility(View.GONE);
             commentsSection.setVisibility(View.GONE);
@@ -176,24 +174,49 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         return view;
     }
 
-    private void setupComments(ListView lvComments, String postKey, @Nullable FirebaseUser currentUser, TextView tvLoginToComment, LinearLayout addCommentLayout) {
+    private void setupComments(LinearLayout llCommentsContainer, String postKey, @Nullable FirebaseUser currentUser, TextView tvLoginToComment, LinearLayout addCommentLayout) {
         DatabaseReference commentsRef = FirebaseDatabase.getInstance().getReference("Comments").child(postKey);
-        ArrayList<Comment> commentsList = new ArrayList<>();
-        CommentAdapter commentAdapter = new CommentAdapter(context, 0, commentsList);
-        lvComments.setAdapter(commentAdapter);
-
+        
         commentsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                commentsList.clear();
+                llCommentsContainer.removeAllViews();
+                LayoutInflater inflater = LayoutInflater.from(context);
+                
                 for (DataSnapshot commentSnapshot : snapshot.getChildren()) {
                     Comment comment = commentSnapshot.getValue(Comment.class);
                     if (comment != null) {
-                        comment.setKey(commentSnapshot.getKey());
-                        commentsList.add(comment);
+                        View commentView = inflater.inflate(R.layout.custom_comment_item, llCommentsContainer, false);
+                        
+                        TextView tvCommentAuthor = commentView.findViewById(R.id.tvCommentAuthor);
+                        TextView tvCommentText = commentView.findViewById(R.id.tvCommentText);
+                        TextView tvCommentTimestamp = commentView.findViewById(R.id.tvCommentTimestamp);
+
+                        tvCommentText.setText(comment.getText());
+                        if (comment.getTimestamp() > 0) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+                            tvCommentTimestamp.setText(sdf.format(new Date(comment.getTimestamp())));
+                        }
+
+                        // Fetch user's first name
+                        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(comment.getUid());
+                        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot userSnapshot) {
+                                if (userSnapshot.exists()) {
+                                    String firstname = userSnapshot.child("firstname").getValue(String.class);
+                                    tvCommentAuthor.setText(firstname != null ? firstname : "Unknown User");
+                                } else {
+                                    tvCommentAuthor.setText("Unknown User");
+                                }
+                            }
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {}
+                        });
+
+                        llCommentsContainer.addView(commentView);
                     }
                 }
-                commentAdapter.notifyDataSetChanged();
             }
 
             @Override

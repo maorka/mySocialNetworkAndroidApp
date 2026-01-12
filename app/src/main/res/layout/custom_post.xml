@@ -68,8 +68,8 @@
 
     <ImageView
         android:id="@+id/ivPostImage"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
         android:layout_marginTop="8dp"
         android:scaleType="centerCrop"
         android:visibility="gone" />
@@ -107,10 +107,12 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <ListView
-            android:id="@+id/lvComments"
+        <!-- Changed from ListView to LinearLayout -->
+        <LinearLayout
+            android:id="@+id/llCommentsContainer"
             android:layout_width="match_parent"
-            android:layout_height="150dp" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
 
         <TextView
             android:id="@+id/tvLoginToComment"
