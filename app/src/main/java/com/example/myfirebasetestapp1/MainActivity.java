@@ -51,10 +51,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference userRef;
     private Spinner spinnerGender;
-    TextView tvProfileWelcome;
+    TextView tvProfileWelcome, tvWelcome;
     private ImageView ivProfilePreview;
     private String selectedImageBase64 = null;
     private ShapeableImageView ivMainProfile;
+    private ValueEventListener currentUserListener;
+    private DatabaseReference currentUserRef;
 
 
     @Override
@@ -74,8 +76,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnDeleteProfile = findViewById(R.id.btnDeleteProfile);
         btnEditProfile = findViewById(R.id.btnEditProfile);
         tvProfileWelcome = findViewById(R.id.tvProfileWelcome);
-        ivMainProfile = findViewById(R.id.ivUserProfileMain);
-
+        tvWelcome = findViewById(R.id.tvWelcome);
+        ivMainProfile = findViewById(R.id.ivUserProfileMain);//profile image in main activity xml
         btnMainLogin.setOnClickListener(this);
         btnMainRegister.setOnClickListener(this);
         btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());
@@ -214,12 +216,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 createLoginDialog();
             } else if (btnMainLogin.getText().toString().equals("Logout"))//if the text written in  the button is logout
             {
-                FirebaseAuth.getInstance().signOut();//sign out
-                Log.d("TAG", "sign out");
-                Toast.makeText(MainActivity.this, "Logout success.",
-                        Toast.LENGTH_SHORT).show();
-                 checkUserConnectedStatus();
-                //btnMainLogin.setText("Login");
+                showLogoutConfirmationDialog();
             }
 
         } else if (v == btnMainRegister) {
@@ -237,6 +234,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    private void showLogoutConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        updateUserOnlineStatus(false); // Set offline status in DB
+                        removeUserDetailsListener(); // Stop listening BEFORE sign out
+                        FirebaseAuth.getInstance().signOut();//sign out
+                        Log.d("TAG", "sign out");
+                        Toast.makeText(MainActivity.this, "Logout success.",
+                                Toast.LENGTH_SHORT).show();
+                        checkUserConnectedStatus();
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void removeUserDetailsListener() {
+        if (currentUserRef != null && currentUserListener != null) {
+            currentUserRef.removeEventListener(currentUserListener);
+            currentUserRef = null;
+            currentUserListener = null;
+        }
+    }
+
+    private void updateUserOnlineStatus(boolean isOnline) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            String uid = currentUser.getUid();
+            DatabaseReference userStatusRef = firebaseDatabase.getReference("Users").child(uid).child("isOnline");
+            userStatusRef.setValue(isOnline);
+            
+            if (isOnline) {
+                // Handle unexpected disconnection (e.g. app crash, network loss)
+                userStatusRef.onDisconnect().setValue(false);
+            }
+        }
+    }
+
     public void adduserDetailsInDB() {
         //function to add user details to DB
         try {
@@ -249,13 +288,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             int age = Integer.parseInt(etAge.getText().toString());
             String gender = spinnerGender.getSelectedItem().toString();
 
-            User userObj1 = new User(uid, etEmail.getText().toString(), etFirstName.getText().toString(), etLastName.getText().toString(), age, uid, gender);
+            // Create user with isOnline = true
+            User userObj1 = new User(uid, etEmail.getText().toString(), etFirstName.getText().toString(), etLastName.getText().toString(), age, uid, gender, true);
 
             // Use UID as the key for the user
             userRef = firebaseDatabase.getReference("Users").child(uid);
             userRef.setValue(userObj1).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Log.d("TAG", "User details saved successfully in DB");
+                    
+                    // Set up onDisconnect even for fresh registrations
+                    userRef.child("isOnline").onDisconnect().setValue(false);
 
                     // If an image was selected, save it under Users/{uid}/profileImage as Base64 string
                     if (selectedImageBase64 != null) {
@@ -308,12 +351,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //check if user is connected or not
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser != null) { // User is connected
-            updateUIForLoggedInUser();
+            updateUIForLoggedInUser();//function for update UI for logged in user
+            updateUserOnlineStatus(true); // Ensure status is 'true' when connected
             String uid = firebaseUser.getUid();
-            DatabaseReference userRef = firebaseDatabase.getReference("Users").child(uid);
-            userRef.addValueEventListener(userDetailsListener);
+            currentUserRef = firebaseDatabase.getReference("Users").child(uid);
+            currentUserListener = currentUserRef.addValueEventListener(userDetailsListener);
         } else { // User is not connected
-            updateUIForLoggedOutUser();
+            removeUserDetailsListener();
+            updateUIForLoggedOutUser();//function for update UI for logged out user
         }
     }
 
@@ -361,23 +406,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     {
         btnAddPost.setEnabled(true);
         btnAllPost.setEnabled(true);
+        btnAllPost.setText("All Posts");
         btnMypost.setVisibility(View.VISIBLE);
         btnAddPost.setVisibility(View.VISIBLE);
         btnMainRegister.setVisibility(View.GONE);
         if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.VISIBLE);
         if (btnEditProfile != null) btnEditProfile.setVisibility(View.VISIBLE);
         btnMainLogin.setText("Logout");
+        if (tvWelcome != null) tvWelcome.setVisibility(View.GONE);
     }
 
     public void updateUIForLoggedOutUser()
     {
         btnMypost.setVisibility(View.GONE);
+        btnAllPost.setText("All Posts(Guest)");
         if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.GONE);
         if (btnEditProfile != null) btnEditProfile.setVisibility(View.GONE);
         btnAddPost.setVisibility(View.GONE);
         btnMainLogin.setText("Login");
         tvProfileWelcome.setVisibility(View.GONE);
         btnMainRegister.setVisibility(View.VISIBLE);
+        if (tvWelcome != null) tvWelcome.setVisibility(View.VISIBLE);
 
         if (ivMainProfile != null) {
             ivMainProfile.setImageBitmap(null);
@@ -417,10 +466,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             FirebaseUser user = mAuth.getCurrentUser();
                             Toast.makeText(MainActivity.this, "Authentication success.",
                                     Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(MainActivity.this, AllPostActivity.class));
                             checkUserConnectedStatus();
-//                            btnMainLogin.setText("Logout");
-//                            btnMainRegister.setEnabled(false);//disable register button
-
                             // updateUI(user);
                         } else {
                             // If sign in fails, display a message to the user.
@@ -500,6 +547,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     Toast.LENGTH_SHORT).show();
                             adduserDetailsInDB();//create new user json/table in Firebase
                             checkUserConnectedStatus();
+                            startActivity(new Intent(MainActivity.this, AllPostActivity.class));
 //                            btnMainLogin.setText("Logout");
                             //btnMainRegister.setEnabled(false);//disable register button
 

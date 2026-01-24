@@ -9,6 +9,8 @@ public class User {
     public String uid;//user uid
     public String email,firstname, lastname,gender, profileImage;//need to add gender option
     public int age;
+    public boolean isOnline; // New field to track online status
+
     public User() {
         // Default constructor required for calls to DataSnapshot.getValue(Post.class)
     }
@@ -21,8 +23,17 @@ public class User {
         this.age = age;
         this.key = key;
         this.gender = gender;
+        this.isOnline = false; // Default to false
     }
 
-
-
+    public User(String uid, String email, String firstname,String lastname, int age,String key, String gender, boolean isOnline) {
+        this.uid = uid;
+        this.email = email;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.age = age;
+        this.key = key;
+        this.gender = gender;
+        this.isOnline = isOnline;
+    }
 }

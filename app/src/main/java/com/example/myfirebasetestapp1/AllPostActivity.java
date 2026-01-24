@@ -2,9 +2,10 @@ package com.example.myfirebasetestapp1;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,6 +25,7 @@ public class AllPostActivity extends AppCompatActivity {
     ArrayList<Post> posts;
     AllpostAdapter allpostAdapter;
     private DatabaseReference database;
+    private Button btnBackToMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +34,16 @@ public class AllPostActivity extends AppCompatActivity {
 
         database = FirebaseDatabase.getInstance().getReference("Posts");//get reference from realtime firebase posts collecion/table
         lv = (ListView) findViewById(R.id.lv);
-         this.retrievedata();
+        btnBackToMenu = (Button) findViewById(R.id.btnBackToMenu);
 
+        btnBackToMenu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish(); // Close this activity and go back to MainActivity
+            }
+        });
 
+        this.retrievedata();
     }
 
     private void retrievedata() {
@@ -51,7 +60,6 @@ public class AllPostActivity extends AppCompatActivity {
                 query = database.orderByChild("uid").equalTo(currentUserUid);//query for specific user posts,filtering in db=>if currentUserUid = uid -> show specific user posts
             } else {
                 // Handle the case where the user is not logged in
-                // You might want to show a message or redirect to the login screen
                 return;
             }
         } else {
