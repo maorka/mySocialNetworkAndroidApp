@@ -19,6 +19,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class AllPostActivity extends AppCompatActivity {
     ListView lv;
@@ -77,6 +78,10 @@ public class AllPostActivity extends AppCompatActivity {
                     Post p = dataSnapshot.getValue(Post.class);
                     posts.add(p);//add post to posts list
                 }
+                
+                // Reverse the list so the newest posts (added last in Firebase) appear at the top
+                Collections.reverse(posts);
+
                 allpostAdapter = new AllpostAdapter(AllPostActivity.this,0,0, posts);//create adapter for list view,0,0 because using custom_post xml
                 lv.setAdapter(allpostAdapter);//set adapter to list view,get all posts and display them om the list
 
