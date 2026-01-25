@@ -73,8 +73,9 @@ public class AllPostActivity extends AppCompatActivity {
     }
 
     private void sendQuickPost() {
-        String body = etQuickPost.getText().toString().trim();
-        if (body.isEmpty()) {
+        // function to send quick post,logic
+        String message = etQuickPost.getText().toString().trim();
+        if (message.isEmpty()) {
             Toast.makeText(this, "Please write something", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -83,8 +84,19 @@ public class AllPostActivity extends AppCompatActivity {
         if (user != null) {
             String uid = user.getUid();
             String key = database.push().getKey();
-            // Using "Quick Post" as title, or could be empty
-            Post quickPost = new Post(uid, "Quick Post", body, 0, key, userFirstName);
+            
+            String title, body;
+            // logic for title and body based on message length
+            if (message.length() <= 20)
+            {
+                title = message;
+                body = "";
+            } else {
+                title = "Post";
+                body = message;
+            }
+
+            Post quickPost = new Post(uid, title, body, 0, key, userFirstName);
             
             if (key != null) {
                 database.child(key).setValue(quickPost).addOnCompleteListener(task -> {
