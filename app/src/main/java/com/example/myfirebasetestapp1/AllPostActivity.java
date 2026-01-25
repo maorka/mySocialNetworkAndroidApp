@@ -2,9 +2,15 @@ package com.example.myfirebasetestapp1;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,40 +33,110 @@ public class AllPostActivity extends AppCompatActivity {
     AllpostAdapter allpostAdapter;
     private DatabaseReference database;
     private Button btnBackToMenu;
+    private TextView tvProfileWelcomeAll;
+    private FirebaseAuth mAuth;
+    private EditText etQuickPost;
+    private ImageButton btnQuickSend;
+    private LinearLayout llQuickPost;
+    private String userFirstName = "User";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_all_post);
 
-        database = FirebaseDatabase.getInstance().getReference("Posts");//get reference from realtime firebase posts collecion/table
+        mAuth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance().getReference("Posts");
         lv = (ListView) findViewById(R.id.lv);
         btnBackToMenu = (Button) findViewById(R.id.btnBackToMenu);
+        tvProfileWelcomeAll = (TextView) findViewById(R.id.tvProfileWelcomeAll);
+        etQuickPost = (EditText) findViewById(R.id.etQuickPost);
+        btnQuickSend = (ImageButton) findViewById(R.id.btnQuickSend);
+        llQuickPost = (LinearLayout) findViewById(R.id.llQuickPost);
 
         btnBackToMenu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish(); // Close this activity and go back to MainActivity
+                finish();
             }
         });
 
+        btnQuickSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendQuickPost();
+            }
+        });
+
+        checkUserStatus();
         this.retrievedata();
     }
 
-    private void retrievedata() {
+    private void sendQuickPost() {
+        String body = etQuickPost.getText().toString().trim();
+        if (body.isEmpty()) {
+            Toast.makeText(this, "Please write something", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            String uid = user.getUid();
+            String key = database.push().getKey();
+            // Using "Quick Post" as title, or could be empty
+            Post quickPost = new Post(uid, "Quick Post", body, 0, key, userFirstName);
+            
+            if (key != null) {
+                database.child(key).setValue(quickPost).addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        etQuickPost.setText("");
+                        Log.d("QuickPost", "Quick post sent successfully");
+                        Toast.makeText(AllPostActivity.this, "Posted!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e("QuickPost", "Failed to send quick post", task.getException());
+                        Toast.makeText(AllPostActivity.this, "Failed to post", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }
+    }
+
+    private void checkUserStatus() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            String uid = user.getUid();
+            llQuickPost.setVisibility(View.VISIBLE);
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(uid);
+            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        userFirstName = snapshot.child("firstname").getValue(String.class);
+                        tvProfileWelcomeAll.setText("Hello, " + userFirstName);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                }
+            });
+        } else {
+            tvProfileWelcomeAll.setText("Hello, Guest");
+            llQuickPost.setVisibility(View.GONE);
+        }
+    }
+
+    private void retrievedata() {
         Query query;
         Intent intent = getIntent();
-        boolean showMyPosts = intent.getBooleanExtra("showMyPosts", false);// intent from myposts button pressed
+        boolean showMyPosts = intent.getBooleanExtra("showMyPosts", false);
 
         if (showMyPosts) {
-            //check if specific user posts are needed
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();//get current user
-            if (currentUser != null) {//check if user is logged in
-                String currentUserUid = currentUser.getUid();//get current user uid
-                query = database.orderByChild("uid").equalTo(currentUserUid);//query for specific user posts,filtering in db=>if currentUserUid = uid -> show specific user posts
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null) {
+                String currentUserUid = currentUser.getUid();
+                query = database.orderByChild("uid").equalTo(currentUserUid);
             } else {
-                // Handle the case where the user is not logged in
                 return;
             }
         } else {
@@ -69,29 +145,20 @@ public class AllPostActivity extends AppCompatActivity {
 
         query.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) //function if success to get data from firebase
-            //get data from firebase
-            {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
                 posts = new ArrayList<Post>();
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) //get/scanning all data from firebase
-                {
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Post p = dataSnapshot.getValue(Post.class);
-                    posts.add(p);//add post to posts list
+                    posts.add(p);
                 }
-                
-                // Reverse the list so the newest posts (added last in Firebase) appear at the top
                 Collections.reverse(posts);
-
-                allpostAdapter = new AllpostAdapter(AllPostActivity.this,0,0, posts);//create adapter for list view,0,0 because using custom_post xml
-                lv.setAdapter(allpostAdapter);//set adapter to list view,get all posts and display them om the list
-
+                allpostAdapter = new AllpostAdapter(AllPostActivity.this, 0, 0, posts);
+                lv.setAdapter(allpostAdapter);
             }
-            @Override
-            public void onCancelled(DatabaseError databaseError) //function if failed to get data from firebase
-            {
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
             }
         });
-
     }
 }
