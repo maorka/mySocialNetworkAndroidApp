@@ -16,7 +16,6 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.imageview.ShapeableImageView;
@@ -35,8 +34,7 @@ import java.util.Map;
 
 public class EditProfileActivity extends AppCompatActivity {
 
-    private static final int PICK_IMAGE_REQUEST = 1;
-    private static final int CAMERA_REQUEST = 2;
+    private static final int IMAGE_PICKER_REQUEST = 1;
     private EditText etFirstName, etLastName, etAge;
     private Spinner spinnerGender;
     private Button btnSaveChanges, btnChangeProfileImage;
@@ -73,49 +71,41 @@ public class EditProfileActivity extends AppCompatActivity {
 
         loadUserData();
 
-        btnChangeProfileImage.setOnClickListener(v -> showImageOptionsDialog());
+        btnChangeProfileImage.setOnClickListener(v -> openImagePicker());
         btnSaveChanges.setOnClickListener(v -> saveChanges());
     }
 
-    private void showImageOptionsDialog() {
-        String[] options = {"Take Photo", "Choose from Gallery"};
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Select Profile Image");
-        builder.setItems(options, (dialog, which) -> {
-            if (which == 0) {
-                openCamera();
-            } else if (which == 1) {
-                openFileChooser();
-            }
-        });
-        builder.show();
-    }
+    private void openImagePicker() {
+        // Intent for Gallery/Files
+        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        galleryIntent.setType("image/*");
 
-    private void openCamera() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(intent, CAMERA_REQUEST);
-    }
+        // Intent for Camera
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-    private void openFileChooser() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(intent, PICK_IMAGE_REQUEST);
+        // Create Chooser
+        Intent chooser = Intent.createChooser(galleryIntent, "Select Image Source");
+        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{cameraIntent});
+
+        startActivityForResult(chooser, IMAGE_PICKER_REQUEST);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
+        if (resultCode == RESULT_OK && requestCode == IMAGE_PICKER_REQUEST && data != null) {
             Bitmap bitmap = null;
-            if (requestCode == PICK_IMAGE_REQUEST && data != null && data.getData() != null) {
+            
+            if (data.getData() != null) {
+                // From Gallery
                 Uri imageUri = data.getData();
                 try {
                     bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            } else if (requestCode == CAMERA_REQUEST && data != null && data.getExtras() != null) {
+            } else if (data.getExtras() != null && data.getExtras().get("data") != null) {
+                // From Camera
                 bitmap = (Bitmap) data.getExtras().get("data");
             }
 
