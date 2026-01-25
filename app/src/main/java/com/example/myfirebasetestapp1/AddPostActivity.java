@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -29,6 +30,7 @@ import java.io.IOException;
 
 public class AddPostActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int PICK_IMAGE_REQUEST = 1;
+    private static final int CAMERA_REQUEST = 2;
     EditText etTitle, etBody;
     Button btnSave, btnSelectImage;
     ImageView ivPostImagePreview;
@@ -56,8 +58,27 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
         if (v.getId() == R.id.btnSave) {
             savePost();
         } else if (v.getId() == R.id.btnSelectImage) {
-            openFileChooser();
+            showImageOptionsDialog();
         }
+    }
+
+    private void showImageOptionsDialog() {
+        String[] options = {"Take Photo", "Choose from Gallery"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Image Source");
+        builder.setItems(options, (dialog, which) -> {
+            if (which == 0) {
+                openCamera();
+            } else if (which == 1) {
+                openFileChooser();
+            }
+        });
+        builder.show();
+    }
+
+    private void openCamera() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, CAMERA_REQUEST);
     }
 
     private void openFileChooser() {
@@ -70,10 +91,20 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri imageUri = data.getData();
-            try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+        if (resultCode == RESULT_OK) {
+            Bitmap bitmap = null;
+            if (requestCode == PICK_IMAGE_REQUEST && data != null && data.getData() != null) {
+                Uri imageUri = data.getData();
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (requestCode == CAMERA_REQUEST && data != null && data.getExtras() != null) {
+                bitmap = (Bitmap) data.getExtras().get("data");
+            }
+
+            if (bitmap != null) {
                 ivPostImagePreview.setImageBitmap(bitmap);
                 ivPostImagePreview.setVisibility(View.VISIBLE);
 
@@ -81,9 +112,6 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
                 byte[] imageBytes = baos.toByteArray();
                 selectedImageBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }

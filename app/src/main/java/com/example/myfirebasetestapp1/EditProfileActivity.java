@@ -16,6 +16,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.imageview.ShapeableImageView;
@@ -35,6 +36,7 @@ import java.util.Map;
 public class EditProfileActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 1;
+    private static final int CAMERA_REQUEST = 2;
     private EditText etFirstName, etLastName, etAge;
     private Spinner spinnerGender;
     private Button btnSaveChanges, btnChangeProfileImage;
@@ -67,12 +69,31 @@ public class EditProfileActivity extends AppCompatActivity {
             return;
         }
 
-        userRef = FirebaseDatabase.getInstance().getReference("Users").child(currentUser.getUid());//get user data from firebase
+        userRef = FirebaseDatabase.getInstance().getReference("Users").child(currentUser.getUid());
 
         loadUserData();
 
-        btnChangeProfileImage.setOnClickListener(v -> openFileChooser());
+        btnChangeProfileImage.setOnClickListener(v -> showImageOptionsDialog());
         btnSaveChanges.setOnClickListener(v -> saveChanges());
+    }
+
+    private void showImageOptionsDialog() {
+        String[] options = {"Take Photo", "Choose from Gallery"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select Profile Image");
+        builder.setItems(options, (dialog, which) -> {
+            if (which == 0) {
+                openCamera();
+            } else if (which == 1) {
+                openFileChooser();
+            }
+        });
+        builder.show();
+    }
+
+    private void openCamera() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, CAMERA_REQUEST);
     }
 
     private void openFileChooser() {
@@ -85,30 +106,35 @@ public class EditProfileActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri imageUri = data.getData();
-            try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                ivProfileImage.setImageBitmap(bitmap);
+        if (resultCode == RESULT_OK) {
+            Bitmap bitmap = null;
+            if (requestCode == PICK_IMAGE_REQUEST && data != null && data.getData() != null) {
+                Uri imageUri = data.getData();
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (requestCode == CAMERA_REQUEST && data != null && data.getExtras() != null) {
+                bitmap = (Bitmap) data.getExtras().get("data");
+            }
 
+            if (bitmap != null) {
+                ivProfileImage.setImageBitmap(bitmap);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
                 byte[] imageBytes = baos.toByteArray();
                 selectedImageBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
 
     private void loadUserData() {
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() //function to load user data
-        {
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    User user = snapshot.getValue(User.class);//read user user template from user class-היא לוקחת את המידע שכבר נשאב (ה-snapshot), ומשתמשת במחלקת User בתור תבנית כדי להפוך אותו מאוסף נתונים גולמי לאובייקט ג'אווה מסודר ונוח לשימוש.
+                    User user = snapshot.getValue(User.class);
                     if (user != null) {
                         etFirstName.setText(user.firstname);
                         etLastName.setText(user.lastname);
@@ -120,10 +146,13 @@ public class EditProfileActivity extends AppCompatActivity {
                             spinnerGender.setSelection(spinnerPosition);
                         }
 
-                        if (user.profileImage != null) {
-                            byte[] imageBytes = Base64.decode(user.profileImage, Base64.DEFAULT);
-                            Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-                            ivProfileImage.setImageBitmap(bitmap);
+                        if (snapshot.hasChild("profileImage")) {
+                            String imgBase64 = snapshot.child("profileImage").getValue(String.class);
+                            if (imgBase64 != null) {
+                                byte[] imageBytes = Base64.decode(imgBase64, Base64.DEFAULT);
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+                                ivProfileImage.setImageBitmap(bitmap);
+                            }
                         }
                     }
                 }
@@ -156,12 +185,10 @@ public class EditProfileActivity extends AppCompatActivity {
         updates.put("gender", gender);
 
         if (selectedImageBase64 != null) {
-            updates.put("profileImage", selectedImageBase64);//update user profile image using key and value method
+            updates.put("profileImage", selectedImageBase64);
         }
 
-        userRef.updateChildren(updates).addOnCompleteListener(task -> //function for update user data in firebase
-        {
-
+        userRef.updateChildren(updates).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Toast.makeText(EditProfileActivity.this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
                 finish();
