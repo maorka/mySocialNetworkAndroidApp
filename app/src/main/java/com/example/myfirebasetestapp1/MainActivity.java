@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -29,6 +30,7 @@ import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -43,6 +45,7 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int PICK_IMAGE_REQUEST = 1;
+
     EditText etEmail, etPass, etFirstName, etLastName, etAge;
     Button btnMainLogin, btnMainRegister, btnReg, btnLogin, btnAddPost, btnAllPost, btnMypost, btnDeleteProfile, btnEditProfile;
     private FirebaseAuth mAuth;
@@ -57,6 +60,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ShapeableImageView ivMainProfile;
     private ValueEventListener currentUserListener;
     private DatabaseReference currentUserRef;
+    
+    private NotificationHelper notificationHelper;
+    private boolean isFirstLoad = true;
 
 
     @Override
@@ -67,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAuth = FirebaseAuth.getInstance(); // Initialize FirebaseAuth
         firebaseDatabase = FirebaseDatabase.getInstance(); // Initialize FirebaseDatabase
         progressDialog = new ProgressDialog(this);
+        notificationHelper = new NotificationHelper(this);
 
         btnMainLogin = (Button) findViewById(R.id.btnLogin);
         btnMainRegister = (Button) findViewById(R.id.btnRegister);
@@ -77,7 +84,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnEditProfile = findViewById(R.id.btnEditProfile);
         tvProfileWelcome = findViewById(R.id.tvProfileWelcome);
         tvWelcome = findViewById(R.id.tvWelcome);
-        ivMainProfile = findViewById(R.id.ivUserProfileMain);//profile image in main activity xml
+        ivMainProfile = findViewById(R.id.ivUserProfileMain);
+
         btnMainLogin.setOnClickListener(this);
         btnMainRegister.setOnClickListener(this);
         btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());
@@ -120,9 +128,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());
         }
 
-
+        setupPostsListener();
         checkUserConnectedStatus();//check if user is connected or not
 
+    }
+
+    private void setupPostsListener() {
+        DatabaseReference postsRef = firebaseDatabase.getReference("Posts");
+        postsRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                if (!isFirstLoad) {
+                    Post post = snapshot.getValue(Post.class);
+                    FirebaseUser currentUser = mAuth.getCurrentUser();
+                    
+                    // Only show notification to logged-in users who didn't author the post
+                    if (post != null && currentUser != null && !post.uid.equals(currentUser.getUid()))
+                    {
+                        notificationHelper.showNewPostNotification(post);//call to show notification function in notification helper class/file
+                        Log.d("notificationHelper", "New post notification shown");
+                    }
+                }
+            }
+
+            @Override public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
+            @Override public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
+
+        postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                isFirstLoad = false;
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     private void showDeleteConfirmationDialog()
@@ -466,8 +508,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             FirebaseUser user = mAuth.getCurrentUser();
                             Toast.makeText(MainActivity.this, "Authentication success.",
                                     Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(MainActivity.this, AllPostActivity.class));
                             checkUserConnectedStatus();
+                            startActivity(new Intent(MainActivity.this, AllPostActivity.class));
+//                            btnMainLogin.setText("Logout");
+//                            btnMainRegister.setEnabled(false);//disable register button
+
                             // updateUI(user);
                         } else {
                             // If sign in fails, display a message to the user.

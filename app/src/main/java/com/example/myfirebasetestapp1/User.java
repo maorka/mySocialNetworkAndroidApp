@@ -23,7 +23,7 @@ public class User {
         this.age = age;
         this.key = key;
         this.gender = gender;
-        this.isOnline = false; // Default to false
+        this.isOnline = false; // Default to false// New field to track online status-for realtime FB db
     }
 
     public User(String uid, String email, String firstname,String lastname, int age,String key, String gender, boolean isOnline) {
@@ -34,6 +34,6 @@ public class User {
         this.age = age;
         this.key = key;
         this.gender = gender;
-        this.isOnline = isOnline;
+        this.isOnline = isOnline;// New field to track online status-for realtime FB db
     }
 }
