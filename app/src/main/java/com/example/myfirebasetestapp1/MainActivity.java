@@ -1,12 +1,15 @@
 package com.example.myfirebasetestapp1;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -23,6 +26,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -45,7 +50,8 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int PICK_IMAGE_REQUEST = 1;
-
+    private static final int NOTIFICATION_PERMISSION_CODE = 101;
+    
     EditText etEmail, etPass, etFirstName, etLastName, etAge;
     Button btnMainLogin, btnMainRegister, btnReg, btnLogin, btnAddPost, btnAllPost, btnMypost, btnDeleteProfile, btnEditProfile;
     private FirebaseAuth mAuth;
@@ -128,9 +134,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());
         }
 
-        setupPostsListener();
+        requestNotificationPermission(); // Request permission for Android 13+
+        setupPostsListener();//setup posts listener
         checkUserConnectedStatus();//check if user is connected or not
 
+    }
+
+    private void requestNotificationPermission() {
+        // function for request notification permission from android 13+ operation system
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void setupPostsListener() {
@@ -142,10 +171,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Post post = snapshot.getValue(Post.class);
                     FirebaseUser currentUser = mAuth.getCurrentUser();
                     
-                    // Only show notification to logged-in users who didn't author the post
                     if (post != null && currentUser != null && !post.uid.equals(currentUser.getUid()))
                     {
-                        notificationHelper.showNewPostNotification(post);//call to show notification function in notification helper class/file
+                        notificationHelper.showNewPostNotification(post);
                         Log.d("notificationHelper", "New post notification shown");
                     }
                 }

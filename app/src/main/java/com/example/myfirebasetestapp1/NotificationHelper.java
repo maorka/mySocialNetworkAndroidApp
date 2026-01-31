@@ -24,10 +24,10 @@ public class NotificationHelper {
 
     public NotificationHelper(Context context) {
         this.context = context;
-        createNotificationChannel();
     }
 
     private void createNotificationChannel() {
+        //function for create notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
@@ -43,8 +43,11 @@ public class NotificationHelper {
     }
 
     public void showNewPostNotification(Post post) {
+
+        createNotificationChannel();  // וודא קיום ערוץ לפני הצגת ההתראה
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_info) // Replace with your R.drawable.notification_icon
+                .setSmallIcon(android.R.drawable.ic_dialog_info) 
                 .setContentTitle("New Post!")
                 .setContentText(post.authorFirstName + " posted a new post: " + post.title)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -59,9 +62,11 @@ public class NotificationHelper {
                     return;
                 }
             }
-
+            
             int id = notifIdGen.incrementAndGet();
             notificationManager.notify(id, builder.build());
+            Log.d("NotificationHelper", "Notification shown with ID: " + id);
+
         } catch (SecurityException e) {
             Log.e("NotificationHelper", "Missing permission for notifications", e);
         }
