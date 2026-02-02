@@ -42,6 +42,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -134,15 +135,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());
         }
 
-        requestNotificationPermission(); // Request permission for Android 13+
-        setupPostsListener();//setup posts listener
-        checkUserConnectedStatus();//check if user is connected or not
+        requestNotificationPermission(); 
+        setupPostsListener();
+        checkUserConnectedStatus();
 
     }
 
     private void requestNotificationPermission() {
-        // function for request notification permission from android 13+ operation system
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
@@ -193,6 +192,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
+    }
+
+    private void updateFCMToken() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                        return;
+                    }
+                    String token = task.getResult();
+                    DatabaseReference ref = firebaseDatabase.getReference("Users")
+                            .child(user.getUid())
+                            .child("fcmToken");
+                    ref.setValue(token);
+                    Log.d("FCM", "Token updated successfully in DB");
+                });
+        }
     }
 
     private void showDeleteConfirmationDialog()
@@ -423,6 +441,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (firebaseUser != null) { // User is connected
             updateUIForLoggedInUser();//function for update UI for logged in user
             updateUserOnlineStatus(true); // Ensure status is 'true' when connected
+            updateFCMToken(); // Primary place to update token
             String uid = firebaseUser.getUid();
             currentUserRef = firebaseDatabase.getReference("Users").child(uid);
             currentUserListener = currentUserRef.addValueEventListener(userDetailsListener);
@@ -538,16 +557,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     Toast.LENGTH_SHORT).show();
                             checkUserConnectedStatus();
                             startActivity(new Intent(MainActivity.this, AllPostActivity.class));
-//                            btnMainLogin.setText("Logout");
-//                            btnMainRegister.setEnabled(false);//disable register button
-
-                            // updateUI(user);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
                             Toast.makeText(MainActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
-                            // updateUI(null);
                         }
                         d.dismiss();//close dialog
                         progressDialog.dismiss();//close progress dialog
@@ -621,9 +635,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             adduserDetailsInDB();//create new user json/table in Firebase
                             checkUserConnectedStatus();
                             startActivity(new Intent(MainActivity.this, AllPostActivity.class));
-//                            btnMainLogin.setText("Logout");
-                            //btnMainRegister.setEnabled(false);//disable register button
-
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
