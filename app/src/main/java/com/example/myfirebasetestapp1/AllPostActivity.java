@@ -32,7 +32,7 @@ public class AllPostActivity extends AppCompatActivity {
     ArrayList<Post> posts;
     AllpostAdapter allpostAdapter;
     private DatabaseReference database;
-    private Button btnBackToMenu;
+    private ImageButton btnBackToMenu;
     private TextView tvProfileWelcomeAll;
     private FirebaseAuth mAuth;
     private EditText etQuickPost;
@@ -48,7 +48,7 @@ public class AllPostActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance().getReference("Posts");
         lv = (ListView) findViewById(R.id.lv);
-        btnBackToMenu = (Button) findViewById(R.id.btnBackToMenu);
+        btnBackToMenu = findViewById(R.id.btnBackToMenu);
         tvProfileWelcomeAll = (TextView) findViewById(R.id.tvProfileWelcomeAll);
         etQuickPost = (EditText) findViewById(R.id.etQuickPost);
         btnQuickSend = (ImageButton) findViewById(R.id.btnQuickSend);
@@ -117,14 +117,14 @@ public class AllPostActivity extends AppCompatActivity {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
             String uid = user.getUid();
-            llQuickPost.setVisibility(View.VISIBLE);
+            if (llQuickPost != null) llQuickPost.setVisibility(View.VISIBLE);
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(uid);
             userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     if (snapshot.exists()) {
                         userFirstName = snapshot.child("firstname").getValue(String.class);
-                        tvProfileWelcomeAll.setText("Hello, " + userFirstName);
+                        if (tvProfileWelcomeAll != null) tvProfileWelcomeAll.setText("Hello, " + userFirstName);
                     }
                 }
 
@@ -133,8 +133,8 @@ public class AllPostActivity extends AppCompatActivity {
                 }
             });
         } else {
-            tvProfileWelcomeAll.setText("Hello, Guest");
-            llQuickPost.setVisibility(View.GONE);
+            if (tvProfileWelcomeAll != null) tvProfileWelcomeAll.setText("Hello, Guest");
+            if (llQuickPost != null) llQuickPost.setVisibility(View.GONE);
         }
     }
 

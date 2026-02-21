@@ -64,6 +64,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         TextView tvBody = view.findViewById(R.id.tvBody);
         TextView tvTimestamp = view.findViewById(R.id.tvTimestamp);
         ImageView ivPostImage = view.findViewById(R.id.ivPostImage);
+        ImageView ivAuthorProfile = view.findViewById(R.id.ivAuthorProfile);
         ImageButton btnPostOptions = view.findViewById(R.id.btnPostOptions);
         ImageButton btnLike = view.findViewById(R.id.btnLike);
         ImageButton btnFavorite = view.findViewById(R.id.btnFavorite);
@@ -84,6 +85,24 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             tvTimestamp.setText(sdf.format(new Date((Long) temp.getTimestamp())));
         }
+
+        // Fetch author's profile image
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(temp.uid);
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.hasChild("profileImage")) {
+                    String base64 = snapshot.child("profileImage").getValue(String.class);
+                    if (base64 != null) {
+                        byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        ivAuthorProfile.setImageBitmap(bitmap);
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
 
         if (temp.getPostImage() != null) {
             byte[] imageBytes = Base64.decode(temp.getPostImage(), Base64.DEFAULT);
@@ -148,14 +167,18 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
 
             if (temp.likers != null && temp.likers.containsKey(userId)) {
                 btnLike.setImageResource(R.drawable.ic_heart_filled);
+                btnLike.setColorFilter(context.getResources().getColor(android.R.color.holo_red_light));
             } else {
                 btnLike.setImageResource(R.drawable.ic_heart_outline);
+                btnLike.setColorFilter(null);
             }
 
             if (temp.favoriters != null && temp.favoriters.containsKey(userId)) {
                 btnFavorite.setImageResource(R.drawable.ic_star_filled);
+                btnFavorite.setColorFilter(null); // uses internal color if defined or just the drawable
             } else {
                 btnFavorite.setImageResource(R.drawable.ic_star_outline);
+                btnFavorite.setColorFilter(null);
             }
 
             btnLike.setOnClickListener(v -> postRef.runTransaction(new Transaction.Handler() {
@@ -202,7 +225,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
                         p.favoriters.put(userId, true);
                         Log.d("Favorites", "Post added to favorites: " + p.title);
                     }
-                    mutableData.setValue(p);//create favorite field in database FB
+                    mutableData.setValue(p);
                     return Transaction.success(mutableData);
                 }
 
