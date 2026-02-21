@@ -66,6 +66,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         ImageView ivPostImage = view.findViewById(R.id.ivPostImage);
         ImageButton btnPostOptions = view.findViewById(R.id.btnPostOptions);
         ImageButton btnLike = view.findViewById(R.id.btnLike);
+        ImageButton btnFavorite = view.findViewById(R.id.btnFavorite);
         TextView tvLikesCount = view.findViewById(R.id.tvLikesCount);
 
         LinearLayout commentsSection = view.findViewById(R.id.commentsSection);
@@ -151,6 +152,12 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
                 btnLike.setImageResource(R.drawable.ic_heart_outline);
             }
 
+            if (temp.favoriters != null && temp.favoriters.containsKey(userId)) {
+                btnFavorite.setImageResource(R.drawable.ic_star_filled);
+            } else {
+                btnFavorite.setImageResource(R.drawable.ic_star_outline);
+            }
+
             btnLike.setOnClickListener(v -> postRef.runTransaction(new Transaction.Handler() {
                 @NonNull
                 @Override
@@ -162,9 +169,11 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
                     if (p.likers.containsKey(userId)) {
                         p.likes--;
                         p.likers.remove(userId);
+                        Log.d("Likes", "Like removed from post: " + p.title);
                     } else {
                         p.likes++;
                         p.likers.put(userId, true);
+                        Log.d("Likes", "Like added to post: " + p.title);
                     }
                     mutableData.setValue(p);
                     return Transaction.success(mutableData);
@@ -177,6 +186,36 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
                     }
                 }
             }));
+
+            btnFavorite.setOnClickListener(v -> postRef.runTransaction(new Transaction.Handler() {
+                @NonNull
+                @Override
+                public Transaction.Result doTransaction(@NonNull MutableData mutableData) {
+                    Post p = mutableData.getValue(Post.class);
+                    if (p == null) return Transaction.success(mutableData);
+                    if (p.favoriters == null) p.favoriters = new HashMap<>();
+
+                    if (p.favoriters.containsKey(userId)) {
+                        p.favoriters.remove(userId);
+                        Log.d("Favorites", "Post removed from favorites: " + p.title);
+                    } else {
+                        p.favoriters.put(userId, true);
+                        Log.d("Favorites", "Post added to favorites: " + p.title);
+                    }
+                    mutableData.setValue(p);//create favorite field in database FB
+                    return Transaction.success(mutableData);
+                }
+
+                @Override
+                public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot snapshot) {
+                    if (error != null) {
+                        Log.e("TAG", "favoriteTransaction:onComplete:", error.toException());
+                    }
+                }
+            }));
+        } else {
+            btnFavorite.setVisibility(View.GONE);
+            btnLike.setVisibility(View.GONE);
         }
 
         return view;

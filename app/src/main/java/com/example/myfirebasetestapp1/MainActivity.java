@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
     
     EditText etEmail, etPass, etFirstName, etLastName, etAge;
-    Button btnMainLogin, btnMainRegister, btnReg, btnLogin, btnAddPost, btnAllPost, btnMypost, btnDeleteProfile, btnEditProfile;
+    Button btnMainLogin, btnMainRegister, btnReg, btnLogin, btnAddPost, btnAllPost, btnMypost, btnDeleteProfile, btnEditProfile, btnMyFavorites;
     private FirebaseAuth mAuth;
     private Dialog d;
     private ProgressDialog progressDialog;
@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnAddPost = (Button) findViewById(R.id.btnAddPost);
         btnAllPost = (Button) findViewById(R.id.btnAllPost);
         btnMypost = (Button) findViewById(R.id.btnMyPost);
+        btnMyFavorites = findViewById(R.id.btnMyFavorites);
         btnDeleteProfile = findViewById(R.id.btnDeleteProfile);
         btnEditProfile = findViewById(R.id.btnEditProfile);
         tvProfileWelcome = findViewById(R.id.tvProfileWelcome);
@@ -123,6 +124,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, AllPostActivity.class);
                 intent.putExtra("showMyPosts", true); // Show only my posts
+                startActivity(intent);
+            }
+        });
+
+        btnMyFavorites.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, AllPostActivity.class);
+                intent.putExtra("showFavorites", true);
                 startActivity(intent);
             }
         });
@@ -497,6 +507,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnAllPost.setEnabled(true);
         btnAllPost.setText("All Posts");
         btnMypost.setVisibility(View.VISIBLE);
+        btnMyFavorites.setVisibility(View.VISIBLE);
         btnAddPost.setVisibility(View.VISIBLE);
         btnMainRegister.setVisibility(View.GONE);
         if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.VISIBLE);
@@ -508,6 +519,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void updateUIForLoggedOutUser()
     {
         btnMypost.setVisibility(View.GONE);
+        btnMyFavorites.setVisibility(View.GONE);
         btnAllPost.setText("All Posts(Guest)");
         if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.GONE);
         if (btnEditProfile != null) btnEditProfile.setVisibility(View.GONE);

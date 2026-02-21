@@ -78,6 +78,14 @@
         android:orientation="horizontal">
 
         <ImageButton
+            android:id="@+id/btnFavorite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_star_outline" />
+
+        <ImageButton
             android:id="@+id/btnLike"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

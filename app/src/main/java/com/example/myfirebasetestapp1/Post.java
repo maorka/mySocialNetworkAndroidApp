@@ -15,6 +15,7 @@ public class Post {
     public int likes=0;
     public String body;
     public Map<String, Boolean> likers = new HashMap<>();
+    public Map<String, Boolean> favoriters = new HashMap<>();
     public Object timestamp;
     public String postImage;
 

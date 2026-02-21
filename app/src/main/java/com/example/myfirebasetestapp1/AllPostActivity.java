@@ -139,29 +139,32 @@ public class AllPostActivity extends AppCompatActivity {
     }
 
     private void retrievedata() {
-        Query query;
         Intent intent = getIntent();
         boolean showMyPosts = intent.getBooleanExtra("showMyPosts", false);
+        boolean showFavorites = intent.getBooleanExtra("showFavorites", false);
 
-        if (showMyPosts) {
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser != null) {
-                String currentUserUid = currentUser.getUid();
-                query = database.orderByChild("uid").equalTo(currentUserUid);
-            } else {
-                return;
-            }
-        } else {
-            query = database;
-        }
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String currentUserUid = (currentUser != null) ? currentUser.getUid() : null;
 
-        query.addValueEventListener(new ValueEventListener() {
+        database.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 posts = new ArrayList<Post>();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Post p = dataSnapshot.getValue(Post.class);
-                    posts.add(p);
+                    if (p != null) {
+                        if (showMyPosts) {
+                            if (currentUserUid != null && p.uid.equals(currentUserUid)) {
+                                posts.add(p);
+                            }
+                        } else if (showFavorites) {
+                            if (currentUserUid != null && p.favoriters != null && p.favoriters.containsKey(currentUserUid)) {
+                                posts.add(p);
+                            }
+                        } else {
+                            posts.add(p);
+                        }
+                    }
                 }
                 Collections.reverse(posts);
                 allpostAdapter = new AllpostAdapter(AllPostActivity.this, 0, 0, posts);
@@ -169,7 +172,8 @@ public class AllPostActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e("AllPostActivity", "Data retrieval cancelled", databaseError.toException());
             }
         });
     }

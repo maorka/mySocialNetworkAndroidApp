@@ -5,4 +5,5 @@
         <item>Female</item>
         <item>Other</item>
     </string-array>
+    <string name="my_favorites">My Favorites</string>
 </resources>
