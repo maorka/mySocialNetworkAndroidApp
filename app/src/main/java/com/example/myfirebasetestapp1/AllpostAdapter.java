@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -16,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,8 +64,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         TextView tvBody = view.findViewById(R.id.tvBody);
         TextView tvTimestamp = view.findViewById(R.id.tvTimestamp);
         ImageView ivPostImage = view.findViewById(R.id.ivPostImage);
-        Button btnDelete = view.findViewById(R.id.btnDelete);
-        Button btnEdit = view.findViewById(R.id.btnEdit);
+        ImageButton btnPostOptions = view.findViewById(R.id.btnPostOptions);
         ImageButton btnLike = view.findViewById(R.id.btnLike);
         TextView tvLikesCount = view.findViewById(R.id.tvLikesCount);
 
@@ -110,27 +111,34 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         });
 
         if (currentUser != null && temp.uid.equals(currentUser.getUid())) {
-            btnDelete.setVisibility(View.VISIBLE);
-            btnDelete.setOnClickListener(v -> {
-                DatabaseReference postRef = FirebaseDatabase.getInstance().getReference("Posts").child(temp.key);
-                postRef.removeValue().addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(context, "Post deleted", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(context, "Failed to delete post", Toast.LENGTH_SHORT).show();
+            btnPostOptions.setVisibility(View.VISIBLE);
+            btnPostOptions.setOnClickListener(v -> {
+                PopupMenu popup = new PopupMenu(context, btnPostOptions);
+                popup.getMenuInflater().inflate(R.menu.post_options_menu, popup.getMenu());
+                
+                popup.setOnMenuItemClickListener(item -> {
+                    if (item.getItemId() == R.id.menu_edit) {
+                        Intent intent = new Intent(context, EditPostActivity.class);
+                        intent.putExtra("POST_KEY", temp.key);
+                        context.startActivity(intent);
+                        return true;
+                    } else if (item.getItemId() == R.id.menu_delete) {
+                        DatabaseReference postRef = FirebaseDatabase.getInstance().getReference("Posts").child(temp.key);
+                        postRef.removeValue().addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(context, "Post deleted", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(context, "Failed to delete post", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        return true;
                     }
+                    return false;
                 });
-            });
-
-            btnEdit.setVisibility(View.VISIBLE);
-            btnEdit.setOnClickListener(v -> {
-                Intent intent = new Intent(context, EditPostActivity.class);
-                intent.putExtra("POST_KEY", temp.key);
-                context.startActivity(intent);
+                popup.show();
             });
         } else {
-            btnDelete.setVisibility(View.GONE);
-            btnEdit.setVisibility(View.GONE);
+            btnPostOptions.setVisibility(View.GONE);
         }
 
         if (currentUser != null) {

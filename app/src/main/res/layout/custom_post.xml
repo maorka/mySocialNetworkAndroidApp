@@ -41,18 +41,13 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnEdit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Edit"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/btnDelete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Delete"
+        <ImageButton
+            android:id="@+id/btnPostOptions"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_more_vert"
+            android:contentDescription="Post options"
             android:visibility="gone" />
 
     </LinearLayout>
@@ -107,7 +102,6 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- Changed from ListView to LinearLayout -->
         <LinearLayout
             android:id="@+id/llCommentsContainer"
             android:layout_width="match_parent"
