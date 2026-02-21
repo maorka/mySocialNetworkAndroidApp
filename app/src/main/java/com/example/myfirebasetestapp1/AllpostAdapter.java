@@ -1,6 +1,7 @@
 package com.example.myfirebasetestapp1;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -11,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -109,6 +111,8 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
             Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
             ivPostImage.setImageBitmap(bitmap);
             ivPostImage.setVisibility(View.VISIBLE);
+            
+            ivPostImage.setOnClickListener(v -> showImagePreviewDialog(bitmap));
         } else {
             ivPostImage.setVisibility(View.GONE);
         }
@@ -242,6 +246,26 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         }
 
         return view;
+    }
+
+    private void showImagePreviewDialog(Bitmap bitmap) {
+        Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_image_preview);
+        
+        ImageView ivPreview = dialog.findViewById(R.id.ivPreview);
+        ivPreview.setImageBitmap(bitmap);
+        
+        // Optional: close on click
+        ivPreview.setOnClickListener(v -> dialog.dismiss());
+        
+        dialog.show();
+        
+        // Set dialog size
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
     }
 
     private void setupComments(LinearLayout llCommentsContainer, String postKey, @Nullable FirebaseUser currentUser, TextView tvLoginToComment, LinearLayout addCommentLayout) {
