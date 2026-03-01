@@ -55,9 +55,11 @@
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp">
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                <ImageButton
+                    android:id="@+id/btnOpenSearch"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@android:drawable/ic_menu_search"
                     app:tint="#888888" />
 

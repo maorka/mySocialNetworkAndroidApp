@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -21,7 +20,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -32,7 +30,7 @@ public class AllPostActivity extends AppCompatActivity {
     ArrayList<Post> posts;
     AllpostAdapter allpostAdapter;
     private DatabaseReference database;
-    private ImageButton btnBackToMenu;
+    private ImageButton btnBackToMenu, btnOpenSearch;
     private TextView tvProfileWelcomeAll;
     private FirebaseAuth mAuth;
     private EditText etQuickPost;
@@ -49,6 +47,7 @@ public class AllPostActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance().getReference("Posts");
         lv = (ListView) findViewById(R.id.lv);
         btnBackToMenu = findViewById(R.id.btnBackToMenu);
+        btnOpenSearch = findViewById(R.id.btnOpenSearch);
         tvProfileWelcomeAll = (TextView) findViewById(R.id.tvProfileWelcomeAll);
         etQuickPost = (EditText) findViewById(R.id.etQuickPost);
         btnQuickSend = (ImageButton) findViewById(R.id.btnQuickSend);
@@ -58,6 +57,13 @@ public class AllPostActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 finish();
+            }
+        });
+
+        btnOpenSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(AllPostActivity.this, SearchActivity.class));
             }
         });
 
