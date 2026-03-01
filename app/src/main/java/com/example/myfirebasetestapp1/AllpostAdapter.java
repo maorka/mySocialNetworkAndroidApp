@@ -70,7 +70,9 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         ImageButton btnPostOptions = view.findViewById(R.id.btnPostOptions);
         ImageButton btnLike = view.findViewById(R.id.btnLike);
         ImageButton btnFavorite = view.findViewById(R.id.btnFavorite);
+        ImageButton btnShowComments = view.findViewById(R.id.btnShowComments);
         TextView tvLikesCount = view.findViewById(R.id.tvLikesCount);
+        TextView tvCommentsCount = view.findViewById(R.id.tvCommentsCount);
 
         LinearLayout commentsSection = view.findViewById(R.id.commentsSection);
         LinearLayout llCommentsContainer = view.findViewById(R.id.llCommentsContainer);
@@ -82,6 +84,18 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         tvTitle.setText(temp.title);
         tvAuthor.setText("by " + temp.authorFirstName);
         tvLikesCount.setText(String.valueOf(temp.likes));
+
+        // Fetch comments count
+        DatabaseReference commentsRef = FirebaseDatabase.getInstance().getReference("Comments").child(temp.key);
+        commentsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                long count = snapshot.getChildrenCount();
+                tvCommentsCount.setText(String.valueOf(count));
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
 
         if (temp.getTimestamp() instanceof Long) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
@@ -120,17 +134,26 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (temp.isExpanded) {
-            tvBody.setText(temp.body);
             tvBody.setVisibility(View.VISIBLE);
+            tvBody.setText(temp.body);
+        } else {
+            tvBody.setVisibility(View.GONE);
+        }
+
+        if (temp.showComments) {
             commentsSection.setVisibility(View.VISIBLE);
             setupComments(llCommentsContainer, temp.key, currentUser, tvLoginToComment, addCommentLayout);
         } else {
-            tvBody.setVisibility(View.GONE);
             commentsSection.setVisibility(View.GONE);
         }
 
         tvTitle.setOnClickListener(v -> {
             temp.isExpanded = !temp.isExpanded;
+            notifyDataSetChanged();
+        });
+
+        btnShowComments.setOnClickListener(v -> {
+            temp.showComments = !temp.showComments;
             notifyDataSetChanged();
         });
 
@@ -179,7 +202,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
 
             if (temp.favoriters != null && temp.favoriters.containsKey(userId)) {
                 btnFavorite.setImageResource(R.drawable.ic_star_filled);
-                btnFavorite.setColorFilter(null); // uses internal color if defined or just the drawable
+                btnFavorite.setColorFilter(null);
             } else {
                 btnFavorite.setImageResource(R.drawable.ic_star_outline);
                 btnFavorite.setColorFilter(null);
@@ -256,12 +279,10 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         ImageView ivPreview = dialog.findViewById(R.id.ivPreview);
         ivPreview.setImageBitmap(bitmap);
         
-        // Optional: close on click
         ivPreview.setOnClickListener(v -> dialog.dismiss());
         
         dialog.show();
         
-        // Set dialog size
         if (dialog.getWindow() != null) {
             dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);

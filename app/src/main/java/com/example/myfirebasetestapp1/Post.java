@@ -21,6 +21,8 @@ public class Post {
 
     @Exclude // This field will not be saved to Firebase
     public boolean isExpanded = false;//משתנה בוליאני עבור body
+    @Exclude
+    public boolean showComments = false;
 
     public Post() {
         // Default constructor required for calls to DataSnapshot.getValue(Post.class)

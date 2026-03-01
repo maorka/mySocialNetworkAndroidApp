@@ -101,7 +101,10 @@
                         android:layout_marginTop="6dp"
                         android:text="Content..."
                         android:textColor="#444444"
-                        android:textSize="16sp" />
+                        android:textSize="16sp"
+                        android:autoLink="all"
+                        android:linksClickable="true"
+                        android:textColorLink="#1E88E5" />
                 </LinearLayout>
 
                 <com.google.android.material.imageview.ShapeableImageView
@@ -167,11 +170,29 @@
                     android:src="@drawable/ic_star_outline"
                     app:tint="#888888" />
 
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:src="@android:drawable/stat_notify_chat"
-                    app:tint="#DDDDDD" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/btnShowComments"
+                        android:layout_width="match_parent"
+                        android:layout_height="28dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/stat_notify_chat"
+                        app:tint="#888888" />
+
+                    <TextView
+                        android:id="@+id/tvCommentsCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="0"
+                        android:textColor="#888888"
+                        android:textSize="14sp" />
+                </LinearLayout>
 
             </LinearLayout>
 
