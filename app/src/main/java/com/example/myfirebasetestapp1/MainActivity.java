@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
     
     EditText etEmail, etPass, etFirstName, etLastName, etAge;
-    Button btnMainLogin, btnMainRegister, btnReg, btnLogin, btnAddPost, btnAllPost, btnMypost, btnDeleteProfile, btnEditProfile, btnMyFavorites;
+    Button btnMainLogin, btnMainRegister, btnReg, btnLogin, btnAddPost, btnAllPost, btnMypost,btnEditProfile, btnMyFavorites;
     private FirebaseAuth mAuth;
     private Dialog d;
     private ProgressDialog progressDialog;
@@ -88,7 +88,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnAllPost = (Button) findViewById(R.id.btnAllPost);
         btnMypost = (Button) findViewById(R.id.btnMyPost);
         btnMyFavorites = findViewById(R.id.btnMyFavorites);
-        btnDeleteProfile = findViewById(R.id.btnDeleteProfile);
         btnEditProfile = findViewById(R.id.btnEditProfile);
         tvProfileWelcome = findViewById(R.id.tvProfileWelcome);
         tvWelcome = findViewById(R.id.tvWelcome);
@@ -96,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         btnMainLogin.setOnClickListener(this);
         btnMainRegister.setOnClickListener(this);
-        btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());
+
 
         ivMainProfile.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
@@ -141,9 +140,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(new Intent(MainActivity.this, EditProfileActivity.class));
         });
 
-        if (btnDeleteProfile != null) {
-            btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());
-        }
+
 
         requestNotificationPermission(); 
         setupPostsListener();
@@ -223,76 +220,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void showDeleteConfirmationDialog()
-    //function for create delete profile dialog
-    {
-        new AlertDialog.Builder(this)
-                .setTitle("Delete Profile")
-                .setMessage("Are you sure you want to delete your profile?")
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        deleteCurrentUserAccount();
-                    }
-                })
-                .setNegativeButton("No", null)
-                .show();
-    }
-
-    private void deleteCurrentUserAccount()
-    //function to delete user account->only after log-in
-    {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(this, "No user logged in to delete.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String uid = currentUser.getUid();
-        progressDialog.setMessage("Deleting account...");
-        progressDialog.show();
-
-        // Step 1: Delete user's posts
-        DatabaseReference postsRef = firebaseDatabase.getReference("Posts");
-        Query userPostsQuery = postsRef.orderByChild("uid").equalTo(uid);
-        userPostsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
-                    postSnapshot.getRef().removeValue();
-                }
-
-                // Step 2: Delete user's profile data from Realtime DB
-                DatabaseReference userProfileRef = firebaseDatabase.getReference("Users").child(uid);
-                userProfileRef.removeValue().addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        // Step 3: Delete user from Authentication
-                        currentUser.delete().addOnCompleteListener(authTask -> {
-                            progressDialog.dismiss();
-                            if (authTask.isSuccessful()) {
-                                Toast.makeText(MainActivity.this, "Account deleted successfully.", Toast.LENGTH_SHORT).show();
-                                Log.d("DeleteUser", "User account deleted successfully.");
-                                checkUserConnectedStatus(); // Update UI
-                            } else {
-                                Toast.makeText(MainActivity.this, "Failed to delete account auth.", Toast.LENGTH_SHORT).show();
-                                Log.e("DeleteUser", "Failed to delete user account from auth.", authTask.getException());
-                            }
-                        });
-                    } else {
-                        progressDialog.dismiss();
-                        Toast.makeText(MainActivity.this, "Failed to delete user profile.", Toast.LENGTH_SHORT).show();
-                        Log.e("DeleteUser", "Failed to delete user profile from DB.", task.getException());
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                progressDialog.dismiss();
-                Log.e("DeleteUser", "Failed to delete user posts.", databaseError.toException());
-            }
-        });
-    }
 
     @Override
     public void onStart() {
@@ -510,7 +437,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnMyFavorites.setVisibility(View.VISIBLE);
         btnAddPost.setVisibility(View.VISIBLE);
         btnMainRegister.setVisibility(View.GONE);
-        if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.VISIBLE);
+       // if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.VISIBLE);
         if (btnEditProfile != null) btnEditProfile.setVisibility(View.VISIBLE);
         btnMainLogin.setText("Logout");
         if (tvWelcome != null) tvWelcome.setVisibility(View.GONE);
@@ -521,7 +448,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnMypost.setVisibility(View.GONE);
         btnMyFavorites.setVisibility(View.GONE);
         btnAllPost.setText("All Posts(Guest)");
-        if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.GONE);
+      //  if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.GONE);
         if (btnEditProfile != null) btnEditProfile.setVisibility(View.GONE);
         btnAddPost.setVisibility(View.GONE);
         btnMainLogin.setText("Login");

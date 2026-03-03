@@ -156,18 +156,7 @@
             app:strokeColor="#DDDDDD"
             app:strokeWidth="1dp" />
 
-        <Button
-            android:id="@+id/btnDeleteProfile"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:gravity="center"
-            android:text="Delete Profile"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp"
-            android:visibility="gone"
-            app:backgroundTint="@color/delete_red"
-            app:cornerRadius="16dp" />
+
 
     </LinearLayout>
 

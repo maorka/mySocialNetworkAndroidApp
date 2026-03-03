@@ -57,7 +57,7 @@ public class AllPostActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 finish();
-            }
+            }//finish->return to main menu
         });
 
         btnOpenSearch.setOnClickListener(new View.OnClickListener() {

@@ -1,5 +1,7 @@
 package com.example.myfirebasetestapp1;
 
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,10 +14,12 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.imageview.ShapeableImageView;
@@ -25,6 +29,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
@@ -34,10 +39,15 @@ import java.util.Map;
 
 public class EditProfileActivity extends AppCompatActivity {
 
+    private FirebaseDatabase firebaseDatabase;
+    private FirebaseAuth mAuth;
+    private ProgressDialog progressDialog;
+
     private static final int IMAGE_PICKER_REQUEST = 1;
     private EditText etFirstName, etLastName, etAge;
     private Spinner spinnerGender;
-    private Button btnSaveChanges, btnChangeProfileImage;
+    private Button btnSaveChanges, btnChangeProfileImage, btnDeleteProfile;
+    private ImageButton btnBack;
     private ShapeableImageView ivProfileImage;
     private DatabaseReference userRef;
     private String selectedImageBase64 = null;
@@ -47,6 +57,10 @@ public class EditProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
 
+        mAuth = FirebaseAuth.getInstance();
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        progressDialog = new ProgressDialog(this);
+
         etFirstName = findViewById(R.id.etEditFirstName);
         etLastName = findViewById(R.id.etEditLastName);
         etAge = findViewById(R.id.etEditAge);
@@ -54,39 +68,102 @@ public class EditProfileActivity extends AppCompatActivity {
         btnSaveChanges = findViewById(R.id.btnSaveChanges);
         btnChangeProfileImage = findViewById(R.id.btnChangeProfileImage);
         ivProfileImage = findViewById(R.id.ivEditProfileImage);
+        btnDeleteProfile = findViewById(R.id.btnDeleteProfile);
+        btnBack = findViewById(R.id.btnBackFromEdit);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.gender_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerGender.setAdapter(adapter);
 
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        userRef = FirebaseDatabase.getInstance().getReference("Users").child(currentUser.getUid());
+        userRef = firebaseDatabase.getReference("Users").child(currentUser.getUid());
 
         loadUserData();
 
         btnChangeProfileImage.setOnClickListener(v -> openImagePicker());
         btnSaveChanges.setOnClickListener(v -> saveChanges());
+        
+        if (btnDeleteProfile != null) {
+            btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());
+        }
+
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());//finish->return to main menu
+        }
+    }
+
+    private void showDeleteConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Profile")
+                .setMessage("Are you sure you want to delete your profile?")
+                .setPositiveButton("Yes", (dialog, which) -> deleteCurrentUserAccount())
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void deleteCurrentUserAccount() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(this, "No user logged in to delete.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String uid = currentUser.getUid();
+        progressDialog.setMessage("Deleting account...");
+        progressDialog.show();
+
+        DatabaseReference postsRef = firebaseDatabase.getReference("Posts");
+        Query userPostsQuery = postsRef.orderByChild("uid").equalTo(uid);
+        userPostsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    postSnapshot.getRef().removeValue();
+                }
+
+                DatabaseReference userProfileRef = firebaseDatabase.getReference("Users").child(uid);
+                userProfileRef.removeValue().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        currentUser.delete().addOnCompleteListener(authTask -> {
+                            progressDialog.dismiss();
+                            if (authTask.isSuccessful()) {
+                                Toast.makeText(EditProfileActivity.this, "Account deleted successfully.", Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent(EditProfileActivity.this, MainActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                Toast.makeText(EditProfileActivity.this, "Failed to delete account auth.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        progressDialog.dismiss();
+                        Toast.makeText(EditProfileActivity.this, "Failed to delete user profile.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                progressDialog.dismiss();
+                Log.e("DeleteUser", "Failed to delete user posts.", databaseError.toException());
+            }
+        });
     }
 
     private void openImagePicker() {
-        // Intent for Gallery/Files
         Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
         galleryIntent.setType("image/*");
-
-        // Intent for Camera
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        // Create Chooser
         Intent chooser = Intent.createChooser(galleryIntent, "Select Image Source");
         chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{cameraIntent});
-
         startActivityForResult(chooser, IMAGE_PICKER_REQUEST);
     }
 
@@ -95,17 +172,13 @@ public class EditProfileActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && requestCode == IMAGE_PICKER_REQUEST && data != null) {
             Bitmap bitmap = null;
-            
             if (data.getData() != null) {
-                // From Gallery
-                Uri imageUri = data.getData();
                 try {
-                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), data.getData());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             } else if (data.getExtras() != null && data.getExtras().get("data") != null) {
-                // From Camera
                 bitmap = (Bitmap) data.getExtras().get("data");
             }
 
@@ -129,13 +202,11 @@ public class EditProfileActivity extends AppCompatActivity {
                         etFirstName.setText(user.firstname);
                         etLastName.setText(user.lastname);
                         etAge.setText(String.valueOf(user.age));
-
                         if (user.gender != null) {
                             ArrayAdapter<CharSequence> adapter = (ArrayAdapter<CharSequence>) spinnerGender.getAdapter();
                             int spinnerPosition = adapter.getPosition(user.gender);
                             spinnerGender.setSelection(spinnerPosition);
                         }
-
                         if (snapshot.hasChild("profileImage")) {
                             String imgBase64 = snapshot.child("profileImage").getValue(String.class);
                             if (imgBase64 != null) {
@@ -167,7 +238,6 @@ public class EditProfileActivity extends AppCompatActivity {
         }
 
         int age = Integer.parseInt(ageStr);
-
         Map<String, Object> updates = new HashMap<>();
         updates.put("firstname", firstName);
         updates.put("lastname", lastName);
