@@ -1,6 +1,8 @@
 package com.example.myfirebasetestapp1;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,6 +17,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -29,6 +33,7 @@ import java.io.IOException;
 
 public class AddPostActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int IMAGE_PICKER_REQUEST = 1;
+    private static final int CAMERA_PERMISSION_CODE = 100;
     EditText etTitle, etBody;
     Button btnSave, btnSelectImage;
     ImageView ivPostImagePreview;
@@ -46,6 +51,10 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
         btnSave = findViewById(R.id.btnSave);
         btnSelectImage = findViewById(R.id.btnSelectImage);
         ivPostImagePreview = findViewById(R.id.ivPostImagePreview);
+        
+        if (findViewById(R.id.btnBack) != null) {
+            findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        }
 
         btnSave.setOnClickListener(this);
         btnSelectImage.setOnClickListener(this);
@@ -56,7 +65,28 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
         if (v.getId() == R.id.btnSave) {
             savePost();
         } else if (v.getId() == R.id.btnSelectImage) {
+            checkPermissionAndOpenPicker();
+        }
+    }
+
+    private void checkPermissionAndOpenPicker() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
+        } else {
             openImagePicker();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openImagePicker();
+            } else {
+                Toast.makeText(this, "Camera permission is required to use the camera", Toast.LENGTH_SHORT).show();
+                openImagePicker(); // Still open picker, gallery might work
+            }
         }
     }
 
@@ -76,10 +106,10 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && requestCode == IMAGE_PICKER_REQUEST && data != null) {
+        if (resultCode == RESULT_OK && requestCode == IMAGE_PICKER_REQUEST) {
             Bitmap bitmap = null;
             
-            if (data.getData() != null) {
+            if (data != null && data.getData() != null) {
                 // From Gallery
                 Uri imageUri = data.getData();
                 try {
@@ -87,7 +117,7 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            } else if (data.getExtras() != null && data.getExtras().get("data") != null) {
+            } else if (data != null && data.getExtras() != null && data.getExtras().get("data") != null) {
                 // From Camera
                 bitmap = (Bitmap) data.getExtras().get("data");
             }
