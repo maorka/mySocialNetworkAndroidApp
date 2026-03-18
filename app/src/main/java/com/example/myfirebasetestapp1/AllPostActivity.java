@@ -98,7 +98,7 @@ public class AllPostActivity extends AppCompatActivity {
                 title = message;
                 body = "";
             } else {
-                title = "Post";
+                title = message.substring(0, 20) + "...";//first 20 characters will be the title
                 body = message;
             }
 
