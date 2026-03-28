@@ -17,7 +17,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +33,8 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -40,12 +44,13 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -54,7 +59,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
     
     EditText etEmail, etPass, etFirstName, etLastName, etAge;
-    Button btnMainLogin, btnMainRegister, btnReg, btnLogin, btnAddPost, btnAllPost, btnMypost,btnEditProfile, btnMyFavorites;
+    Button btnMainLogin, btnMainRegister, btnReg, btnLogin;
+    TextView btnEditProfile;
+    FloatingActionButton btnAddPost;
     private FirebaseAuth mAuth;
     private Dialog d;
     private ProgressDialog progressDialog;
@@ -62,8 +69,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private DatabaseReference userRef;
     private Spinner spinnerGender;
     TextView tvProfileWelcome, tvWelcome;
-    private ImageView ivProfilePreview;
-    private String selectedImageBase64 = null;
     private ShapeableImageView ivMainProfile;
     private ValueEventListener currentUserListener;
     private DatabaseReference currentUserRef;
@@ -71,81 +76,167 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private NotificationHelper notificationHelper;
     private boolean isFirstLoad = true;
 
+    // Posts related
+    private ListView lvMainPosts;
+    private ArrayList<Post> postsList;
+    private AllpostAdapter postsAdapter;
+    private DatabaseReference postsDatabase;
+    private BottomNavigationView bottomNavigationView;
+    private View llHeader;
+
+    // Quick Post
+    private View llQuickPostContainer;
+    private EditText etQuickPost;
+    private ImageButton btnQuickSend;
+    private String userFirstName = "User";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mAuth = FirebaseAuth.getInstance(); // Initialize FirebaseAuth
-        firebaseDatabase = FirebaseDatabase.getInstance(); // Initialize FirebaseDatabase
+        mAuth = FirebaseAuth.getInstance();
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        postsDatabase = firebaseDatabase.getReference("Posts");
         progressDialog = new ProgressDialog(this);
         notificationHelper = new NotificationHelper(this);
 
-        btnMainLogin = (Button) findViewById(R.id.btnLogin);
-        btnMainRegister = (Button) findViewById(R.id.btnRegister);
-        btnAddPost = (Button) findViewById(R.id.btnAddPost);
-        btnAllPost = (Button) findViewById(R.id.btnAllPost);
-        btnMypost = (Button) findViewById(R.id.btnMyPost);
-        btnMyFavorites = findViewById(R.id.btnMyFavorites);
+        btnMainLogin = findViewById(R.id.btnLogin);
+        btnMainRegister = findViewById(R.id.btnRegister);
+        btnAddPost = findViewById(R.id.btnAddPost);
         btnEditProfile = findViewById(R.id.btnEditProfile);
         tvProfileWelcome = findViewById(R.id.tvProfileWelcome);
         tvWelcome = findViewById(R.id.tvWelcome);
         ivMainProfile = findViewById(R.id.ivUserProfileMain);
+        lvMainPosts = findViewById(R.id.lvMainPosts);
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        llHeader = findViewById(R.id.llHeader);
+
+        // Quick Post Init
+        llQuickPostContainer = findViewById(R.id.llQuickPostContainer);
+        etQuickPost = findViewById(R.id.etQuickPost);
+        btnQuickSend = findViewById(R.id.btnQuickSend);
 
         btnMainLogin.setOnClickListener(this);
         btnMainRegister.setOnClickListener(this);
 
-
-        ivMainProfile.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setType("image/*");
-            startActivityForResult(Intent.createChooser(intent, "Select Profile Image"), PICK_IMAGE_REQUEST);
-        });
-
-        btnAddPost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, AddPostActivity.class));
-            }
-        });
-        btnAllPost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AllPostActivity.class);
-                intent.putExtra("showMyPosts", false); // Explicitly show all posts
-                startActivity(intent);
-            }
-        });
-
-        btnMypost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AllPostActivity.class);
-                intent.putExtra("showMyPosts", true); // Show only my posts
-                startActivity(intent);
-            }
-        });
-
-        btnMyFavorites.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AllPostActivity.class);
-                intent.putExtra("showFavorites", true);
-                startActivity(intent);
-            }
+        btnAddPost.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, AddPostActivity.class));
         });
 
         btnEditProfile.setOnClickListener(v -> {
             startActivity(new Intent(MainActivity.this, EditProfileActivity.class));
         });
 
+        btnQuickSend.setOnClickListener(v -> sendQuickPost());
 
+        bottomNavigationView.setOnNavigationItemSelectedListener(item -> {// Handle navigation item selection
+            int id = item.getItemId();
+            if (id == R.id.nav_all_posts) {
+                if (mAuth.getCurrentUser() != null) {
+                    llQuickPostContainer.setVisibility(View.VISIBLE);
+                }
+                retrievePosts(false, false);
+                return true;
+            } else if (id == R.id.nav_search) {
+                startActivity(new Intent(MainActivity.this, SearchActivity.class));
+                return true;
+            }
+                else if (id == R.id.nav_my_posts) {
+                    startActivity(new Intent(MainActivity.this,EditProfileActivity.class));
+                    return true;
+
+                } else if (id == R.id.nav_my_posts) {
+                if (mAuth.getCurrentUser() != null) {
+                    llQuickPostContainer.setVisibility(View.GONE);
+                    retrievePosts(true, false);
+                    return true;
+                } else {
+                    Toast.makeText(this, "Please login to see your posts", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+            } else if (id == R.id.nav_favorites) {
+                if (mAuth.getCurrentUser() != null) {
+                    llQuickPostContainer.setVisibility(View.GONE);
+                    retrievePosts(false, true);
+                    return true;
+                } else {
+                    Toast.makeText(this, "Please login to see favorites", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
+            }
+            return false;
+        });
 
         requestNotificationPermission(); 
         setupPostsListener();
         checkUserConnectedStatus();
+    }
 
+    private void sendQuickPost() {
+        String message = etQuickPost.getText().toString().trim();
+        if (message.isEmpty()) {
+            Toast.makeText(this, "Please write something", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            String uid = user.getUid();
+            DatabaseReference newPostRef = postsDatabase.push();
+            String key = newPostRef.getKey();
+            
+            String title, body;
+            if (message.length() <= 20) {
+                title = message;
+                body = "";
+            } else {
+                title = message.substring(0, 20) + "...";
+                body = message;
+            }
+
+            Post quickPost = new Post(uid, title, body, 0, key, userFirstName);
+            if (key != null) {
+                newPostRef.setValue(quickPost).addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        etQuickPost.setText("");
+                        Toast.makeText(MainActivity.this, "Posted!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }
+    }
+
+    private void retrievePosts(boolean showMyPosts, boolean showFavorites) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String currentUserUid = (currentUser != null) ? currentUser.getUid() : null;
+
+        postsDatabase.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                postsList = new ArrayList<>();
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    Post p = dataSnapshot.getValue(Post.class);
+                    if (p != null) {
+                        if (showMyPosts && currentUserUid != null) {
+                            if (p.uid.equals(currentUserUid)) postsList.add(p);
+                        } else if (showFavorites && currentUserUid != null) {
+                            if (p.favoriters != null && p.favoriters.containsKey(currentUserUid)) postsList.add(p);
+                        } else if (!showMyPosts && !showFavorites) {
+                            postsList.add(p);
+                        }
+                    }
+                }
+                Collections.reverse(postsList);
+                postsAdapter = new AllpostAdapter(MainActivity.this, 0, 0, postsList);
+                lvMainPosts.setAdapter(postsAdapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     private void requestNotificationPermission() {
@@ -156,124 +247,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == NOTIFICATION_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
     private void setupPostsListener() {
-        DatabaseReference postsRef = firebaseDatabase.getReference("Posts");
-        postsRef.addChildEventListener(new ChildEventListener() {
+        postsDatabase.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 if (!isFirstLoad) {
                     Post post = snapshot.getValue(Post.class);
                     FirebaseUser currentUser = mAuth.getCurrentUser();
-                    
-                    if (post != null && currentUser != null && !post.uid.equals(currentUser.getUid()))
-                    {
+                    if (post != null && currentUser != null && !post.uid.equals(currentUser.getUid())) {
                         notificationHelper.showNewPostNotification(post);
-                        Log.d("notificationHelper", "New post notification shown");
                     }
                 }
             }
-
             @Override public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
             @Override public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
             @Override public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
 
-        postsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        postsDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 isFirstLoad = false;
             }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
-    }
-
-    private void updateFCMToken() {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            FirebaseMessaging.getInstance().getToken()
-                .addOnCompleteListener(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.w("FCM", "Fetching FCM registration token failed", task.getException());
-                        return;
-                    }
-                    String token = task.getResult();
-                    DatabaseReference ref = firebaseDatabase.getReference("Users")
-                            .child(user.getUid())
-                            .child("fcmToken");
-                    ref.setValue(token);
-                    Log.d("FCM", "Token updated successfully in DB");
-                });
-        }
-    }
-
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            //  reload();
-        }
     }
 
     @Override
     public void onClick(View v) {
-        if (v == btnMainLogin)//check button status if login or logout
-        {
-            if (btnMainLogin.getText().toString().equals("Login"))//if the text written in  the button is login
-
-            {
-                createLoginDialog();
-            } else if (btnMainLogin.getText().toString().equals("Logout"))//if the text written in  the button is logout
-            {
-                showLogoutConfirmationDialog();
-            }
-
+        if (v == btnMainLogin) {
+            if (btnMainLogin.getText().toString().equals("Login")) createLoginDialog();
+            else showLogoutConfirmationDialog();
         } else if (v == btnMainRegister) {
             createRegisterDialog();
-
-        } else if (btnReg == v) //btnRegister is the button in the dialog pop-up
-        {
+        } else if (btnReg == v) {
             register();
-
-        } else if (v == btnLogin)//btnLogin is the login button in the dialog pop-up
-        {
+        } else if (v == btnLogin) {
             login();
         }
-
-
     }
 
     private void showLogoutConfirmationDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Logout")
                 .setMessage("Are you sure you want to logout?")
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        updateUserOnlineStatus(false); // Set offline status in DB
-                        removeUserDetailsListener(); // Stop listening BEFORE sign out
-                        FirebaseAuth.getInstance().signOut();//sign out
-                        Log.d("TAG", "sign out");
-                        Toast.makeText(MainActivity.this, "Logout success.",
-                                Toast.LENGTH_SHORT).show();
-                        checkUserConnectedStatus();
-                    }
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    updateUserOnlineStatus(false);
+                    removeUserDetailsListener();
+                    mAuth.signOut();
+                    checkUserConnectedStatus();
                 })
                 .setNegativeButton("No", null)
                 .show();
@@ -290,301 +313,137 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void updateUserOnlineStatus(boolean isOnline) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            String uid = currentUser.getUid();
-            DatabaseReference userStatusRef = firebaseDatabase.getReference("Users").child(uid).child("isOnline");
+            DatabaseReference userStatusRef = firebaseDatabase.getReference("Users").child(currentUser.getUid()).child("isOnline");
             userStatusRef.setValue(isOnline);
-            
-            if (isOnline) {
-                // Handle unexpected disconnection (e.g. app crash, network loss)
-                userStatusRef.onDisconnect().setValue(false);
-            }
+            if (isOnline) userStatusRef.onDisconnect().setValue(false);
         }
     }
-
-    public void adduserDetailsInDB() {
-        //function to add user details to DB
-        try {
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser == null) {
-                Log.e("adduserDetailsInDB", "Current user is null, cannot add details to DB.");
-                return;
-            }
-            String uid = currentUser.getUid();
-            int age = Integer.parseInt(etAge.getText().toString());
-            String gender = spinnerGender.getSelectedItem().toString();
-
-            // Create user with isOnline = true
-            User userObj1 = new User(uid, etEmail.getText().toString(), etFirstName.getText().toString(), etLastName.getText().toString(), age, uid, gender, true);
-
-            // Use UID as the key for the user
-            userRef = firebaseDatabase.getReference("Users").child(uid);
-            userRef.setValue(userObj1).addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    Log.d("TAG", "User details saved successfully in DB");
-                    
-                    // Set up onDisconnect even for fresh registrations
-                    userRef.child("isOnline").onDisconnect().setValue(false);
-
-                    // If an image was selected, save it under Users/{uid}/profileImage as Base64 string
-                    if (selectedImageBase64 != null) {
-                        userRef.child("profileImage").setValue(selectedImageBase64)
-                                .addOnCompleteListener(imgTask -> {
-                                    if (imgTask.isSuccessful()) {
-                                        Log.d("TAG", "Profile image saved in Realtime DB");
-                                    } else {
-                                        Log.e("TAG", "Failed to save profile image", imgTask.getException());
-                                    }                                });
-                    }
-
-                } else {
-                    Log.e("TAG", "Failed to save user details", task.getException());
-                    Toast.makeText(this, "Failed to save user details.", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "Age must be a valid number.", Toast.LENGTH_SHORT).show();
-            Log.e("adduserDetailsInDB", "NumberFormatException for age", e);
-        } catch (Exception e) {
-            Toast.makeText(this, "An error occurred while saving user details.", Toast.LENGTH_SHORT).show();
-            Log.e("adduserDetailsInDB", "Error saving user details", e);
-        }
-    }
-
-    private void updateProfileImage(String base64Image) {
-        //function to update user profile image
-
-        FirebaseUser currentUser = mAuth.getCurrentUser();//check if user is logged in
-        if (currentUser == null) {
-            return; // Should not happen if called correctly
-        }
-        String uid = currentUser.getUid();
-        DatabaseReference userRef = firebaseDatabase.getReference("Users").child(uid);
-        userRef.child("profileImage").setValue(base64Image)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(MainActivity.this, "Profile image updated.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "Failed to update profile image.", Toast.LENGTH_SHORT).show();
-                        Log.e("UpdateImage", "Failed to update profile image in DB", task.getException());
-                    }
-                });
-    }
-
 
     public void checkUserConnectedStatus() {
-        //check if user is connected or not
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser != null) { // User is connected
-            updateUIForLoggedInUser();//function for update UI for logged in user
-            updateUserOnlineStatus(true); // Ensure status is 'true' when connected
-            updateFCMToken(); // Primary place to update token
-            String uid = firebaseUser.getUid();
-            currentUserRef = firebaseDatabase.getReference("Users").child(uid);
+        if (firebaseUser != null) {
+            updateUIForLoggedInUser();
+            updateUserOnlineStatus(true);
+            currentUserRef = firebaseDatabase.getReference("Users").child(firebaseUser.getUid());
             currentUserListener = currentUserRef.addValueEventListener(userDetailsListener);
-        } else { // User is not connected
+        } else {
             removeUserDetailsListener();
-            updateUIForLoggedOutUser();//function for update UI for logged out user
+            updateUIForLoggedOutUser();
         }
+        retrievePosts(false, false);
     }
 
     private final ValueEventListener userDetailsListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot snapshot) {
             if (snapshot.exists()) {
-                String firstname = snapshot.child("firstname").getValue(String.class);
-                tvProfileWelcome.setText("Hello, " + firstname);
-                tvProfileWelcome.setVisibility(View.VISIBLE);
-
+                userFirstName = snapshot.child("firstname").getValue(String.class);
+                tvProfileWelcome.setText("Hello, " + userFirstName);
                 if (snapshot.hasChild("profileImage")) {
                     String imageBase64 = snapshot.child("profileImage").getValue(String.class);
                     try {
                         byte[] imageBytes = Base64.decode(imageBase64, Base64.DEFAULT);
                         Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-                        if (ivMainProfile != null) {
-                            ivMainProfile.setImageBitmap(bitmap);
-                            ivMainProfile.setVisibility(View.VISIBLE);
-                        }
-                    } catch (Exception e) {
-                        Log.e("LoadImage", "Error decoding Base64 string", e);
-                        if (ivMainProfile != null) {
-                            ivMainProfile.setImageResource(android.R.drawable.ic_menu_gallery);
-                            ivMainProfile.setVisibility(View.VISIBLE);
-                        }
-                    }
-                } else {
-                    if (ivMainProfile != null) {
-                        ivMainProfile.setImageResource(android.R.drawable.ic_menu_gallery);
+                        ivMainProfile.setImageBitmap(bitmap);
                         ivMainProfile.setVisibility(View.VISIBLE);
+                    } catch (Exception e) {
+                        ivMainProfile.setImageResource(android.R.drawable.ic_menu_gallery);
                     }
                 }
             }
         }
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError error) {
-            Log.e("UserDetails", "Failed to read user details", error.toException());
-            Toast.makeText(MainActivity.this, "Failed to load profile.", Toast.LENGTH_SHORT).show();
-        }
+        @Override public void onCancelled(@NonNull DatabaseError error) {}
     };
 
-    public void updateUIForLoggedInUser()
-    {
-        btnAddPost.setEnabled(true);
-        btnAllPost.setEnabled(true);
-        btnAllPost.setText("All Posts");
-        btnMypost.setVisibility(View.VISIBLE);
-        btnMyFavorites.setVisibility(View.VISIBLE);
+    public void updateUIForLoggedInUser() {
         btnAddPost.setVisibility(View.VISIBLE);
         btnMainRegister.setVisibility(View.GONE);
-       // if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.VISIBLE);
-        if (btnEditProfile != null) btnEditProfile.setVisibility(View.VISIBLE);
+        btnEditProfile.setVisibility(View.VISIBLE);
         btnMainLogin.setText("Logout");
-        if (tvWelcome != null) tvWelcome.setVisibility(View.GONE);
+        tvWelcome.setVisibility(View.GONE);
+        bottomNavigationView.setVisibility(View.VISIBLE);
+        findViewById(R.id.bottomAppBar).setVisibility(View.VISIBLE);
+        llHeader.setVisibility(View.VISIBLE);
+        tvProfileWelcome.setVisibility(View.VISIBLE);
+        lvMainPosts.setVisibility(View.VISIBLE);
+        llQuickPostContainer.setVisibility(View.VISIBLE);
     }
 
-    public void updateUIForLoggedOutUser()
-    {
-        btnMypost.setVisibility(View.GONE);
-        btnMyFavorites.setVisibility(View.GONE);
-        btnAllPost.setText("All Posts(Guest)");
-      //  if (btnDeleteProfile != null) btnDeleteProfile.setVisibility(View.GONE);
-        if (btnEditProfile != null) btnEditProfile.setVisibility(View.GONE);
+    public void updateUIForLoggedOutUser() {
+        btnEditProfile.setVisibility(View.GONE);
         btnAddPost.setVisibility(View.GONE);
         btnMainLogin.setText("Login");
         tvProfileWelcome.setVisibility(View.GONE);
         btnMainRegister.setVisibility(View.VISIBLE);
-        if (tvWelcome != null) tvWelcome.setVisibility(View.VISIBLE);
-
-        if (ivMainProfile != null) {
-            ivMainProfile.setImageBitmap(null);
-            ivMainProfile.setVisibility(View.GONE);
-        }
+        tvWelcome.setVisibility(View.GONE); // Change to GONE to show list
+        bottomNavigationView.setVisibility(View.VISIBLE); // Show for guests
+        findViewById(R.id.bottomAppBar).setVisibility(View.VISIBLE);
+        llHeader.setVisibility(View.VISIBLE); // Keep welcome header
+        ivMainProfile.setVisibility(View.GONE);
+        lvMainPosts.setVisibility(View.VISIBLE); // Show list for guests
+        llQuickPostContainer.setVisibility(View.GONE);
     }
 
     private void createLoginDialog() {
         d = new Dialog(this);
-        d.setContentView(R.layout.login_layout);//convert loginlayout xml to java object,connect between java and xml
-        d.setTitle("Login");
-        d.setCancelable(true);
-        etEmail = (EditText) d.findViewById(R.id.etEmail);
-        etPass = (EditText) d.findViewById(R.id.etPass);
-        btnLogin = (Button) d.findViewById(R.id.btnLogin);
+        d.setContentView(R.layout.login_layout);
+        etEmail = d.findViewById(R.id.etEmail);
+        etPass = d.findViewById(R.id.etPass);
+        btnLogin = d.findViewById(R.id.btnLogin);
         btnLogin.setOnClickListener(this);
         d.show();
-
-
     }
 
     private void login() {
-
-        //function to login user
         progressDialog.setMessage("Login Please Wait...");
         progressDialog.show();
-        String email = etEmail.getText().toString();
-        String password = etPass.getText().toString();
-        String TAG = "tag";
-        mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d(TAG, "signInWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            Toast.makeText(MainActivity.this, "Authentication success.",
-                                    Toast.LENGTH_SHORT).show();
-                            checkUserConnectedStatus();
-                            startActivity(new Intent(MainActivity.this, AllPostActivity.class));
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w(TAG, "signInWithEmail:failure", task.getException());
-                            Toast.makeText(MainActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                        d.dismiss();//close dialog
-                        progressDialog.dismiss();//close progress dialog
-
+        mAuth.signInWithEmailAndPassword(etEmail.getText().toString(), etPass.getText().toString())
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        checkUserConnectedStatus();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                     }
+                    d.dismiss();
+                    progressDialog.dismiss();
                 });
-
     }
 
     public void createRegisterDialog() {
         d = new Dialog(this);
-        d.setContentView(R.layout.registerlayout);//convert registerlayout xml to java object,connect between java and xml
-        d.setTitle("Register");
-        d.setCancelable(true);
-        etEmail = (EditText) d.findViewById(R.id.etEmail);
-        etPass = (EditText) d.findViewById(R.id.etPass);
-        etAge = (EditText) d.findViewById(R.id.etAge);
-        etFirstName = (EditText) d.findViewById(R.id.etFirstname);
-        etLastName = (EditText) d.findViewById(R.id.etLastname);
-        spinnerGender = (Spinner) d.findViewById(R.id.spinnerGender);
-        btnReg = (Button) d.findViewById(R.id.btnRegister);
+        d.setContentView(R.layout.registerlayout);
+        etEmail = d.findViewById(R.id.etEmail);
+        etPass = d.findViewById(R.id.etPass);
+        etAge = d.findViewById(R.id.etAge);
+        etFirstName = d.findViewById(R.id.etFirstname);
+        etLastName = d.findViewById(R.id.etLastname);
+        spinnerGender = d.findViewById(R.id.spinnerGender);
+        btnReg = d.findViewById(R.id.btnRegister);
         btnReg.setOnClickListener(this);
         d.show();
-
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri imageUri = data.getData();
-            try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                if (ivProfilePreview != null) {
-                    ivProfilePreview.setImageBitmap(bitmap);
-                }
-
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
-                byte[] imageBytes = baos.toByteArray();
-                selectedImageBase64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-
-                FirebaseUser currentUser = mAuth.getCurrentUser();
-                if (currentUser != null && selectedImageBase64 != null) {
-                    ivMainProfile.setImageBitmap(bitmap);
-                    updateProfileImage(selectedImageBase64);
-                }
-
-            } catch (IOException e) {
-                Log.e("ImagePick", "Failed to get bitmap from uri", e);
-            }
-        }
     }
 
     private void register() {
-        //function to create user/register user
-        String TAG = "tag";
         progressDialog.setMessage("Registering Please Wait...");
         progressDialog.show();
-
-        mAuth.createUserWithEmailAndPassword(etEmail.getText().toString(), etPass.getText().toString())//have to be string and password have to be at least 6 characters
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d(TAG, "createUserWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            Toast.makeText(MainActivity.this, "Authentication success.",
-                                    Toast.LENGTH_SHORT).show();
-                            adduserDetailsInDB();//create new user json/table in Firebase
-                            checkUserConnectedStatus();
-                            startActivity(new Intent(MainActivity.this, AllPostActivity.class));
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(MainActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-
-                        }
-                        d.dismiss();//close dialog
-                        progressDialog.dismiss();//close progress dialog
+        mAuth.createUserWithEmailAndPassword(etEmail.getText().toString(), etPass.getText().toString())
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        adduserDetailsInDB();
+                        checkUserConnectedStatus();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                     }
-
+                    d.dismiss();
+                    progressDialog.dismiss();
                 });
+    }
+
+    private void adduserDetailsInDB() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) return;
+        String uid = currentUser.getUid();
+        User userObj = new User(uid, etEmail.getText().toString(), etFirstName.getText().toString(), etLastName.getText().toString(), Integer.parseInt(etAge.getText().toString()), uid, spinnerGender.getSelectedItem().toString(), true);
+        firebaseDatabase.getReference("Users").child(uid).setValue(userObj);
     }
 }

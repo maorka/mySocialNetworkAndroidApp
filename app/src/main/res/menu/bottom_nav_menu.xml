@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_all_posts"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:title="דף הבית" />
+    <item
+        android:id="@+id/nav_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="חיפוש" />
+    <item
+        android:id="@+id/nav_placeholder"
+        android:title=""
+        android:enabled="false" />
+    <item
+        android:id="@+id/nav_favorites"
+        android:icon="@drawable/ic_heart_outline"
+        android:title="מועדפים" />
+    <item
+        android:id="@+id/nav_my_posts"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="אזור אישי" />
+</menu>
