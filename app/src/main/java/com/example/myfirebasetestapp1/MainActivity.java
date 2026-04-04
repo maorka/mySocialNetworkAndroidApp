@@ -90,6 +90,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageButton btnQuickSend;
     private String userFirstName = "User";
 
+    // Search related
+    private View cvSearchContainer;
+    private EditText etSearchInMain;
+    private ImageButton btnClearSearchMain;
+    private ArrayList<Post> fullPostsList;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +124,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         etQuickPost = findViewById(R.id.etQuickPost);
         btnQuickSend = findViewById(R.id.btnQuickSend);
 
+        // Search Init
+        cvSearchContainer = findViewById(R.id.cvSearchContainer);
+        etSearchInMain = findViewById(R.id.etSearchInMain);
+        btnClearSearchMain = findViewById(R.id.btnClearSearchMain);
+
         btnMainLogin.setOnClickListener(this);
         btnMainRegister.setOnClickListener(this);
 
@@ -130,42 +141,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         btnQuickSend.setOnClickListener(v -> sendQuickPost());
+        
+        btnClearSearchMain.setOnClickListener(v -> etSearchInMain.setText(""));
 
-        bottomNavigationView.setOnNavigationItemSelectedListener(item -> {// Handle navigation item selection
+        etSearchInMain.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterPosts(s.toString());
+            }
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
+            FirebaseUser user = mAuth.getCurrentUser();
+            
+            // Hide search by default unless selected
+            cvSearchContainer.setVisibility(View.GONE);
+            
             if (id == R.id.nav_all_posts) {
-                if (mAuth.getCurrentUser() != null) {
-                    llQuickPostContainer.setVisibility(View.VISIBLE);
-                }
+                if (user != null) llQuickPostContainer.setVisibility(View.VISIBLE);
                 retrievePosts(false, false);
                 return true;
             } else if (id == R.id.nav_search) {
-                startActivity(new Intent(MainActivity.this, SearchActivity.class));
+                llQuickPostContainer.setVisibility(View.GONE);
+                cvSearchContainer.setVisibility(View.VISIBLE);
+                retrievePosts(false, false); // Load all to filter
                 return true;
-            }
-                else if (id == R.id.nav_my_posts) {
-                    startActivity(new Intent(MainActivity.this,EditProfileActivity.class));
-                    return true;
-
-                } else if (id == R.id.nav_my_posts) {
-                if (mAuth.getCurrentUser() != null) {
-                    llQuickPostContainer.setVisibility(View.GONE);
-                    retrievePosts(true, false);
-                    return true;
-                } else {
-                    Toast.makeText(this, "Please login to see your posts", Toast.LENGTH_SHORT).show();
-                    return false;
-                }
             } else if (id == R.id.nav_favorites) {
-                if (mAuth.getCurrentUser() != null) {
+                if (user != null) {
                     llQuickPostContainer.setVisibility(View.GONE);
                     retrievePosts(false, true);
                     return true;
-                } else {
-                    Toast.makeText(this, "Please login to see favorites", Toast.LENGTH_SHORT).show();
-                    return false;
                 }
-
+                return false;
+            } else if (id == R.id.nav_my_posts) {
+                if (user != null) {
+                    llQuickPostContainer.setVisibility(View.GONE);
+                    retrievePosts(true, false);
+                    return true;
+                }
+                return false;
             }
             return false;
         });
@@ -173,6 +192,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         requestNotificationPermission(); 
         setupPostsListener();
         checkUserConnectedStatus();
+    }
+
+    private void filterPosts(String query) {
+        if (fullPostsList == null) return;
+        ArrayList<Post> filtered = new ArrayList<>();
+        String lowerQuery = query.toLowerCase().trim();
+        if (lowerQuery.isEmpty()) {
+            filtered.addAll(fullPostsList);
+        } else {
+            for (Post p : fullPostsList) {
+                if ((p.title != null && p.title.toLowerCase().contains(lowerQuery)) ||
+                    (p.body != null && p.body.toLowerCase().contains(lowerQuery))) {
+                    filtered.add(p);
+                }
+            }
+        }
+        postsAdapter = new AllpostAdapter(MainActivity.this, 0, 0, filtered);
+        lvMainPosts.setAdapter(postsAdapter);
     }
 
     private void sendQuickPost() {
@@ -216,10 +253,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         postsDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                fullPostsList = new ArrayList<>();
                 postsList = new ArrayList<>();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Post p = dataSnapshot.getValue(Post.class);
                     if (p != null) {
+                        fullPostsList.add(p);
                         if (showMyPosts && currentUserUid != null) {
                             if (p.uid.equals(currentUserUid)) postsList.add(p);
                         } else if (showFavorites && currentUserUid != null) {
@@ -229,9 +268,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }
                 }
+                Collections.reverse(fullPostsList);
                 Collections.reverse(postsList);
-                postsAdapter = new AllpostAdapter(MainActivity.this, 0, 0, postsList);
-                lvMainPosts.setAdapter(postsAdapter);
+                
+                if (cvSearchContainer.getVisibility() == View.VISIBLE) {
+                    filterPosts(etSearchInMain.getText().toString());
+                } else {
+                    postsAdapter = new AllpostAdapter(MainActivity.this, 0, 0, postsList);
+                    lvMainPosts.setAdapter(postsAdapter);
+                }
             }
 
             @Override
@@ -367,6 +412,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tvProfileWelcome.setVisibility(View.VISIBLE);
         lvMainPosts.setVisibility(View.VISIBLE);
         llQuickPostContainer.setVisibility(View.VISIBLE);
+        cvSearchContainer.setVisibility(View.GONE);
+        
+        bottomNavigationView.getMenu().findItem(R.id.nav_favorites).setVisible(true);
+        bottomNavigationView.getMenu().findItem(R.id.nav_my_posts).setVisible(true);
     }
 
     public void updateUIForLoggedOutUser() {
@@ -375,13 +424,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnMainLogin.setText("Login");
         tvProfileWelcome.setVisibility(View.GONE);
         btnMainRegister.setVisibility(View.VISIBLE);
-        tvWelcome.setVisibility(View.GONE); // Change to GONE to show list
-        bottomNavigationView.setVisibility(View.VISIBLE); // Show for guests
+        tvWelcome.setVisibility(View.VISIBLE);
+        bottomNavigationView.setVisibility(View.VISIBLE);
         findViewById(R.id.bottomAppBar).setVisibility(View.VISIBLE);
-        llHeader.setVisibility(View.VISIBLE); // Keep welcome header
+        llHeader.setVisibility(View.VISIBLE);
         ivMainProfile.setVisibility(View.GONE);
-        lvMainPosts.setVisibility(View.VISIBLE); // Show list for guests
+        lvMainPosts.setVisibility(View.VISIBLE);
         llQuickPostContainer.setVisibility(View.GONE);
+        cvSearchContainer.setVisibility(View.GONE);
+
+        bottomNavigationView.getMenu().findItem(R.id.nav_favorites).setVisible(false);
+        bottomNavigationView.getMenu().findItem(R.id.nav_my_posts).setVisible(false);
     }
 
     private void createLoginDialog() {
