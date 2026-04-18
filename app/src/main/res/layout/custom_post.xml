@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingLeft="12dp"
-    android:paddingRight="12dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
     android:paddingTop="6dp"
     android:paddingBottom="6dp">
 
@@ -51,7 +51,8 @@
                         android:text="by Author"
                         android:textColor="#333333"
                         android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:textDirection="locale" />
 
                     <TextView
                         android:id="@+id/tvTimestamp"
@@ -92,7 +93,8 @@
                         android:text="Title"
                         android:textColor="#222222"
                         android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:textDirection="locale" />
 
                     <TextView
                         android:id="@+id/tvBody"
@@ -104,7 +106,8 @@
                         android:textSize="16sp"
                         android:autoLink="all"
                         android:linksClickable="true"
-                        android:textColorLink="#1E88E5" />
+                        android:textColorLink="#1E88E5"
+                        android:textDirection="locale" />
                 </LinearLayout>
 
                 <com.google.android.material.imageview.ShapeableImageView

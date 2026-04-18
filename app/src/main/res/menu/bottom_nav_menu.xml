@@ -8,13 +8,15 @@
         android:id="@+id/nav_search"
         android:icon="@android:drawable/ic_menu_search"
         android:title="חיפוש" />
+
     <item
-        android:id="@+id/nav_placeholder"
+        android:id="@+id/placeholder"
         android:title=""
         android:enabled="false" />
+
     <item
         android:id="@+id/nav_favorites"
-        android:icon="@drawable/ic_heart_outline"
+        android:icon="@drawable/ic_star_outline"
         android:title="מועדפים" />
     <item
         android:id="@+id/nav_my_posts"

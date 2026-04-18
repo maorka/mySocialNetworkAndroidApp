@@ -136,9 +136,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(new Intent(MainActivity.this, AddPostActivity.class));
         });
 
-        btnEditProfile.setOnClickListener(v -> {
-            startActivity(new Intent(MainActivity.this, EditProfileActivity.class));
-        });
+//        btnEditProfile.setOnClickListener(v -> {
+//            startActivity(new Intent(MainActivity.this, EditProfileActivity.class));
+//        });
 
         btnQuickSend.setOnClickListener(v -> sendQuickPost());
         
@@ -180,8 +180,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return false;
             } else if (id == R.id.nav_my_posts) {
                 if (user != null) {
-                    llQuickPostContainer.setVisibility(View.GONE);
-                    retrievePosts(true, false);
+                    startActivity(new Intent(MainActivity.this, EditProfileActivity.class));
                     return true;
                 }
                 return false;

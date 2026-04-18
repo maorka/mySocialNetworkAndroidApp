@@ -209,15 +209,15 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         app:fabAlignmentMode="center"
-        app:fabCradleMargin="8dp"
-        app:fabCradleRoundedCornerRadius="16dp"
+        app:fabCradleMargin="10dp"
+        app:fabCradleRoundedCornerRadius="20dp"
+        app:fabCradleVerticalOffset="10dp"
         android:backgroundTint="#FFFFFF">
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottomNavigationView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
             android:background="@android:color/transparent"
             app:elevation="0dp"
             app:menu="@menu/bottom_nav_menu"
