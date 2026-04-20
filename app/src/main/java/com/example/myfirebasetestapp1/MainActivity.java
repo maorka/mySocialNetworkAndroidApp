@@ -3,11 +3,14 @@ package com.example.myfirebasetestapp1;
 import android.Manifest;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -191,6 +194,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         requestNotificationPermission(); 
         setupPostsListener();
         checkUserConnectedStatus();
+        checkInternetConnection();
+    }
+
+    private void checkInternetConnection() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+
+        if (!isConnected) {
+            Log.e("ConnectionStatus", "No internet connection detected.");
+            Toast.makeText(this, "No internet connection detected.", Toast.LENGTH_LONG).show();
+        } else {
+            Log.d("ConnectionStatus", "Internet connection is active.");
+        }
     }
 
     private void filterPosts(String query) {

@@ -126,6 +126,7 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
                 ivPostImagePreview.setImageBitmap(bitmap);
                 ivPostImagePreview.setVisibility(View.VISIBLE);
 
+                // דחיסת התמונה והמרה למערך בייטים
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
                 byte[] imageBytes = baos.toByteArray();
@@ -159,7 +160,9 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
                             newPost.setPostImage(selectedImageBase64);
                         }
 
-                        postRef.setValue(newPost).addOnCompleteListener(task -> {
+                        // Save the post to the database including the post image if selected
+                        postRef.setValue(newPost).addOnCompleteListener(task ->
+                        {
                             if (task.isSuccessful()) {
                                 Toast.makeText(AddPostActivity.this, "Post created successfully", Toast.LENGTH_SHORT).show();
                                 finish();

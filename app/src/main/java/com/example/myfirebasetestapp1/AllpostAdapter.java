@@ -79,7 +79,8 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
         TextView tvLoginToComment = view.findViewById(R.id.tvLoginToComment);
         LinearLayout addCommentLayout = view.findViewById(R.id.addCommentLayout);
 
-        Post temp = objects.get(position);
+        Post temp = objects.get(position);//get the current post
+
 
         tvTitle.setText(temp.title);
         tvAuthor.setText("by " + temp.authorFirstName);
