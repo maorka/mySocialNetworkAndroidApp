@@ -2,6 +2,7 @@ package com.example.myfirebasetestapp1;
 
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -46,11 +47,17 @@ public class EditProfileActivity extends AppCompatActivity {
     private static final int IMAGE_PICKER_REQUEST = 1;
     private EditText etFirstName, etLastName, etAge;
     private Spinner spinnerGender;
-    private Button btnSaveChanges, btnChangeProfileImage, btnDeleteProfile, btnMyPosts;
+    private Button btnSaveChanges, btnChangeProfileImage, btnDeleteProfile, btnMyPosts, btnLogout;
     private ImageButton btnBack;
     private ShapeableImageView ivProfileImage;
     private DatabaseReference userRef;
     private String selectedImageBase64 = null;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        String lang = LocaleHelper.getLanguage(newBase);
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +78,7 @@ public class EditProfileActivity extends AppCompatActivity {
         btnDeleteProfile = findViewById(R.id.btnDeleteProfile);
         btnBack = findViewById(R.id.btnBackFromEdit);
         btnMyPosts = findViewById(R.id.btnMyPosts);
+        btnLogout = findViewById(R.id.btnLogout);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.gender_array, android.R.layout.simple_spinner_item);
@@ -105,6 +113,16 @@ public class EditProfileActivity extends AppCompatActivity {
 
         if (btnBack != null) {
             btnBack.setOnClickListener(v -> finish());//finish->return to main menu
+        }
+
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(v -> {
+                mAuth.signOut();
+                Intent intent = new Intent(EditProfileActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                finish();
+            });
         }
     }
 

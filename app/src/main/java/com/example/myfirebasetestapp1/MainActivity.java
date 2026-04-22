@@ -1,104 +1,73 @@
 package com.example.myfirebasetestapp1;
 
-import android.Manifest;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Spinner;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.imageview.ShapeableImageView;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.messaging.FirebaseMessaging;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final int PICK_IMAGE_REQUEST = 1;
-    private static final int NOTIFICATION_PERMISSION_CODE = 101;
-    
-    EditText etEmail, etPass, etFirstName, etLastName, etAge;
-    Button btnMainLogin, btnMainRegister, btnReg, btnLogin;
-    TextView btnEditProfile;
-    FloatingActionButton btnAddPost;
     private FirebaseAuth mAuth;
-    private Dialog d;
-    private ProgressDialog progressDialog;
     private FirebaseDatabase firebaseDatabase;
-    private DatabaseReference userRef;
-    private Spinner spinnerGender;
-    TextView tvProfileWelcome, tvWelcome;
-    private ShapeableImageView ivMainProfile;
-    private ValueEventListener currentUserListener;
-    private DatabaseReference currentUserRef;
-    
-    private NotificationHelper notificationHelper;
-    private boolean isFirstLoad = true;
-
-    // Posts related
-    private ListView lvMainPosts;
-    private ArrayList<Post> postsList;
-    private AllpostAdapter postsAdapter;
     private DatabaseReference postsDatabase;
+    private ProgressDialog progressDialog;
+    private NotificationHelper notificationHelper;
+
+    private Button btnMainLogin, btnMainRegister;
+    private TextView btnEditProfile;
+    private com.google.android.material.floatingactionbutton.FloatingActionButton btnAddPost;
+    private TextView tvProfileWelcome, tvWelcome;
+    private ImageView ivMainProfile;
+    private ListView lvMainPosts;
     private BottomNavigationView bottomNavigationView;
-    private View llHeader;
+    private AllpostAdapter postAdapter;
+    private ArrayList<Post> postsList;
+    private LinearLayout llHeader;
 
     // Quick Post
-    private View llQuickPostContainer;
+    private com.google.android.material.card.MaterialCardView llQuickPostContainer;
     private EditText etQuickPost;
     private ImageButton btnQuickSend;
-    private String userFirstName = "User";
 
-    // Search related
-    private View cvSearchContainer;
-    private EditText etSearchInMain;
-    private ImageButton btnClearSearchMain;
+    // Search
     private ArrayList<Post> fullPostsList;
+    private ImageButton btnChangeLang;
 
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        String lang = LocaleHelper.getLanguage(newBase);
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,392 +96,202 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         etQuickPost = findViewById(R.id.etQuickPost);
         btnQuickSend = findViewById(R.id.btnQuickSend);
 
-        // Search Init
-        cvSearchContainer = findViewById(R.id.cvSearchContainer);
-        etSearchInMain = findViewById(R.id.etSearchInMain);
-        btnClearSearchMain = findViewById(R.id.btnClearSearchMain);
+        btnChangeLang = findViewById(R.id.btnChangeLang);
 
         btnMainLogin.setOnClickListener(this);
         btnMainRegister.setOnClickListener(this);
+        btnChangeLang.setOnClickListener(v -> showLanguageMenu());
 
         btnAddPost.setOnClickListener(v -> {
             startActivity(new Intent(MainActivity.this, AddPostActivity.class));
         });
 
-//        btnEditProfile.setOnClickListener(v -> {
-//            startActivity(new Intent(MainActivity.this, EditProfileActivity.class));
-//        });
+        btnEditProfile.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, EditProfileActivity.class));
+        });
 
         btnQuickSend.setOnClickListener(v -> sendQuickPost());
         
-        btnClearSearchMain.setOnClickListener(v -> etSearchInMain.setText(""));
+        setupBottomNavigation();
+        loadPosts();
+        updateUI();
+        updateBottomNavTitles();
+    }
 
-        etSearchInMain.addTextChangedListener(new android.text.TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterPosts(s.toString());
+    private void showLanguageMenu() {
+        PopupMenu popupMenu = new PopupMenu(this, btnChangeLang);
+        popupMenu.getMenu().add(0, 1, 0, "English");
+        popupMenu.getMenu().add(0, 2, 1, "עברית");
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            String lang = "en";
+            if (item.getItemId() == 2) {
+                lang = "iw";
             }
-            @Override
-            public void afterTextChanged(android.text.Editable s) {}
+            
+            if (!lang.equals(LocaleHelper.getLanguage(this))) {
+                LocaleHelper.setLocale(this, lang);
+                Intent intent = getIntent();
+                finish();
+                startActivity(intent);
+            }
+            return true;
         });
+        popupMenu.show();
+    }
 
+    private void updateBottomNavTitles() {
+        bottomNavigationView.getMenu().findItem(R.id.nav_all_posts).setTitle(R.string.home);
+        bottomNavigationView.getMenu().findItem(R.id.nav_search).setTitle(R.string.search);
+        bottomNavigationView.getMenu().findItem(R.id.nav_favorites).setTitle(R.string.favorites);
+        bottomNavigationView.getMenu().findItem(R.id.nav_my_posts).setTitle(R.string.my_profile);
+    }
+
+    private void setupBottomNavigation() {
         bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
-            FirebaseUser user = mAuth.getCurrentUser();
-            
-            // Hide search by default unless selected
-            cvSearchContainer.setVisibility(View.GONE);
-            
             if (id == R.id.nav_all_posts) {
-                if (user != null) llQuickPostContainer.setVisibility(View.VISIBLE);
-                retrievePosts(false, false);
                 return true;
             } else if (id == R.id.nav_search) {
-                llQuickPostContainer.setVisibility(View.GONE);
-                cvSearchContainer.setVisibility(View.VISIBLE);
-                retrievePosts(false, false); // Load all to filter
+                startActivity(new Intent(this, AllPostActivity.class));
                 return true;
             } else if (id == R.id.nav_favorites) {
-                if (user != null) {
-                    llQuickPostContainer.setVisibility(View.GONE);
-                    retrievePosts(false, true);
-                    return true;
-                }
-                return false;
+                Intent intent = new Intent(this, AllPostActivity.class);
+                intent.putExtra("showFavorites", true);
+                startActivity(intent);
+                return true;
             } else if (id == R.id.nav_my_posts) {
-                if (user != null) {
-                    startActivity(new Intent(MainActivity.this, EditProfileActivity.class));
-                    return true;
+                if (mAuth.getCurrentUser() != null) {
+                    startActivity(new Intent(this, EditProfileActivity.class));
+                } else {
+                    Toast.makeText(this, "Please login first", Toast.LENGTH_SHORT).show();
                 }
-                return false;
+                return true;
             }
             return false;
         });
-
-        requestNotificationPermission(); 
-        setupPostsListener();
-        checkUserConnectedStatus();
-        checkInternetConnection();
     }
 
-    private void checkInternetConnection() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
-        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-
-        if (!isConnected) {
-            Log.e("ConnectionStatus", "No internet connection detected.");
-            Toast.makeText(this, "No internet connection detected.", Toast.LENGTH_LONG).show();
-        } else {
-            Log.d("ConnectionStatus", "Internet connection is active.");
-        }
-    }
-
-    private void filterPosts(String query) {
-        if (fullPostsList == null) return;
-        ArrayList<Post> filtered = new ArrayList<>();
-        String lowerQuery = query.toLowerCase().trim();
-        if (lowerQuery.isEmpty()) {
-            filtered.addAll(fullPostsList);
-        } else {
-            for (Post p : fullPostsList) {
-                if ((p.title != null && p.title.toLowerCase().contains(lowerQuery)) ||
-                    (p.body != null && p.body.toLowerCase().contains(lowerQuery))) {
-                    filtered.add(p);
-                }
-            }
-        }
-        postsAdapter = new AllpostAdapter(MainActivity.this, 0, 0, filtered);
-        lvMainPosts.setAdapter(postsAdapter);
-    }
-
-    private void sendQuickPost() {
-        String message = etQuickPost.getText().toString().trim();
-        if (message.isEmpty()) {
-            Toast.makeText(this, "Please write something", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            String uid = user.getUid();
-            DatabaseReference newPostRef = postsDatabase.push();
-            String key = newPostRef.getKey();
-            
-            String title, body;
-            if (message.length() <= 20) {
-                title = message;
-                body = "";
-            } else {
-                title = message.substring(0, 20) + "...";
-                body = message;
-            }
-
-            Post quickPost = new Post(uid, title, body, 0, key, userFirstName);
-            if (key != null) {
-                newPostRef.setValue(quickPost).addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        etQuickPost.setText("");
-                        Toast.makeText(MainActivity.this, "Posted!", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        }
-    }
-
-    private void retrievePosts(boolean showMyPosts, boolean showFavorites) {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        String currentUserUid = (currentUser != null) ? currentUser.getUid() : null;
+    private void loadPosts() {
+        postsList = new ArrayList<>();
+        fullPostsList = new ArrayList<>();
+        postAdapter = new AllpostAdapter(this, 0, 0, postsList);
+        lvMainPosts.setAdapter(postAdapter);
 
         postsDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                fullPostsList = new ArrayList<>();
-                postsList = new ArrayList<>();
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    Post p = dataSnapshot.getValue(Post.class);
-                    if (p != null) {
-                        fullPostsList.add(p);
-                        if (showMyPosts && currentUserUid != null) {
-                            if (p.uid.equals(currentUserUid)) postsList.add(p);
-                        } else if (showFavorites && currentUserUid != null) {
-                            if (p.favoriters != null && p.favoriters.containsKey(currentUserUid)) postsList.add(p);
-                        } else if (!showMyPosts && !showFavorites) {
-                            postsList.add(p);
+                postsList.clear();
+                fullPostsList.clear();
+                for (DataSnapshot postSnapshot : snapshot.getChildren()) {
+                    Post post = postSnapshot.getValue(Post.class);
+                    if (post != null) {
+                        post.key = postSnapshot.getKey();
+                        postsList.add(post);
+                        fullPostsList.add(post);
+                    }
+                }
+                Collections.reverse(postsList);
+                Collections.reverse(fullPostsList);
+                postAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(MainActivity.this, "Error loading posts", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateUI() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            btnMainLogin.setVisibility(View.GONE);
+            btnMainRegister.setVisibility(View.GONE);
+            btnAddPost.setVisibility(View.VISIBLE);
+            btnEditProfile.setVisibility(View.VISIBLE);
+            tvProfileWelcome.setVisibility(View.VISIBLE);
+            ivMainProfile.setVisibility(View.VISIBLE);
+            tvWelcome.setVisibility(View.GONE);
+            llQuickPostContainer.setVisibility(View.VISIBLE);
+
+            DatabaseReference userRef = firebaseDatabase.getReference("Users").child(user.getUid());
+            userRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        String firstName = snapshot.child("firstname").getValue(String.class);
+                        String profileImage = snapshot.child("profileImage").getValue(String.class);
+                        tvProfileWelcome.setText("Hello, " + (firstName != null ? firstName : "User"));
+                        if (profileImage != null && !profileImage.isEmpty()) {
+                            try {
+                                byte[] imageBytes = Base64.decode(profileImage, Base64.DEFAULT);
+                                Glide.with(MainActivity.this)
+                                        .load(imageBytes)
+                                        .into(ivMainProfile);
+                            } catch (Exception e) {
+                                Log.e("MainActivity", "Error decoding base64 image", e);
+                            }
                         }
                     }
                 }
-                Collections.reverse(fullPostsList);
-                Collections.reverse(postsList);
-                
-                if (cvSearchContainer.getVisibility() == View.VISIBLE) {
-                    filterPosts(etSearchInMain.getText().toString());
-                } else {
-                    postsAdapter = new AllpostAdapter(MainActivity.this, 0, 0, postsList);
-                    lvMainPosts.setAdapter(postsAdapter);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-    private void requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
-            }
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {}
+            });
+        } else {
+            btnMainLogin.setVisibility(View.VISIBLE);
+            btnMainRegister.setVisibility(View.VISIBLE);
+            btnAddPost.setVisibility(View.GONE);
+            btnEditProfile.setVisibility(View.GONE);
+            tvProfileWelcome.setVisibility(View.GONE);
+            ivMainProfile.setVisibility(View.GONE);
+            tvWelcome.setVisibility(View.VISIBLE);
+            llQuickPostContainer.setVisibility(View.GONE);
         }
     }
 
-    private void setupPostsListener() {
-        postsDatabase.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                if (!isFirstLoad) {
-                    Post post = snapshot.getValue(Post.class);
-                    FirebaseUser currentUser = mAuth.getCurrentUser();
-                    if (post != null && currentUser != null && !post.uid.equals(currentUser.getUid())) {
-                        notificationHelper.showNewPostNotification(post);
-                    }
-                }
-            }
-            @Override public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
-            @Override public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
-            @Override public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
-        });
+    private void sendQuickPost() {
+        String body = etQuickPost.getText().toString().trim();
+        if (body.isEmpty()) return;
 
-        postsDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                isFirstLoad = false;
-            }
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
-        });
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) return;
+
+        progressDialog.setMessage("Posting...");
+        progressDialog.show();
+
+        firebaseDatabase.getReference("Users").child(user.getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String authorName = snapshot.child("firstname").getValue(String.class);
+                        String key = postsDatabase.push().getKey();
+                        Post post = new Post(user.getUid(), "Quick Post", body, 0, key, authorName);
+                        
+                        if (key != null) {
+                            postsDatabase.child(key).setValue(post).addOnCompleteListener(task -> {
+                                progressDialog.dismiss();
+                                if (task.isSuccessful()) {
+                                    etQuickPost.setText("");
+                                    Toast.makeText(MainActivity.this, "Posted!", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        progressDialog.dismiss();
+                    }
+                });
     }
 
     @Override
     public void onClick(View v) {
-        if (v == btnMainLogin) {
-            if (btnMainLogin.getText().toString().equals("Login")) createLoginDialog();
-            else showLogoutConfirmationDialog();
-        } else if (v == btnMainRegister) {
-            createRegisterDialog();
-        } else if (btnReg == v) {
-            register();
-        } else if (v == btnLogin) {
-            login();
+        int id = v.getId();
+        if (id == R.id.btnLogin) {
+            startActivity(new Intent(this, LoginActivity.class));
+        } else if (id == R.id.btnRegister) {
+            startActivity(new Intent(this, RegisterActivity.class));
         }
-    }
-
-    private void showLogoutConfirmationDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Logout")
-                .setMessage("Are you sure you want to logout?")
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    updateUserOnlineStatus(false);
-                    removeUserDetailsListener();
-                    mAuth.signOut();
-                    checkUserConnectedStatus();
-                })
-                .setNegativeButton("No", null)
-                .show();
-    }
-
-    private void removeUserDetailsListener() {
-        if (currentUserRef != null && currentUserListener != null) {
-            currentUserRef.removeEventListener(currentUserListener);
-            currentUserRef = null;
-            currentUserListener = null;
-        }
-    }
-
-    private void updateUserOnlineStatus(boolean isOnline) {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            DatabaseReference userStatusRef = firebaseDatabase.getReference("Users").child(currentUser.getUid()).child("isOnline");
-            userStatusRef.setValue(isOnline);
-            if (isOnline) userStatusRef.onDisconnect().setValue(false);
-        }
-    }
-
-    public void checkUserConnectedStatus() {
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser != null) {
-            updateUIForLoggedInUser();
-            updateUserOnlineStatus(true);
-            currentUserRef = firebaseDatabase.getReference("Users").child(firebaseUser.getUid());
-            currentUserListener = currentUserRef.addValueEventListener(userDetailsListener);
-        } else {
-            removeUserDetailsListener();
-            updateUIForLoggedOutUser();
-        }
-        retrievePosts(false, false);
-    }
-
-    private final ValueEventListener userDetailsListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot snapshot) {
-            if (snapshot.exists()) {
-                userFirstName = snapshot.child("firstname").getValue(String.class);
-                tvProfileWelcome.setText("Hello, " + userFirstName);
-                if (snapshot.hasChild("profileImage")) {
-                    String imageBase64 = snapshot.child("profileImage").getValue(String.class);
-                    try {
-                        byte[] imageBytes = Base64.decode(imageBase64, Base64.DEFAULT);
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-                        ivMainProfile.setImageBitmap(bitmap);
-                        ivMainProfile.setVisibility(View.VISIBLE);
-                    } catch (Exception e) {
-                        ivMainProfile.setImageResource(android.R.drawable.ic_menu_gallery);
-                    }
-                }
-            }
-        }
-        @Override public void onCancelled(@NonNull DatabaseError error) {}
-    };
-
-    public void updateUIForLoggedInUser() {
-        btnAddPost.setVisibility(View.VISIBLE);
-        btnMainRegister.setVisibility(View.GONE);
-        btnEditProfile.setVisibility(View.VISIBLE);
-        btnMainLogin.setText("Logout");
-        tvWelcome.setVisibility(View.GONE);
-        bottomNavigationView.setVisibility(View.VISIBLE);
-        findViewById(R.id.bottomAppBar).setVisibility(View.VISIBLE);
-        llHeader.setVisibility(View.VISIBLE);
-        tvProfileWelcome.setVisibility(View.VISIBLE);
-        lvMainPosts.setVisibility(View.VISIBLE);
-        llQuickPostContainer.setVisibility(View.VISIBLE);
-        cvSearchContainer.setVisibility(View.GONE);
-        
-        bottomNavigationView.getMenu().findItem(R.id.nav_favorites).setVisible(true);
-        bottomNavigationView.getMenu().findItem(R.id.nav_my_posts).setVisible(true);
-    }
-
-    public void updateUIForLoggedOutUser() {
-        btnEditProfile.setVisibility(View.GONE);
-        btnAddPost.setVisibility(View.GONE);
-        btnMainLogin.setText("Login");
-        tvProfileWelcome.setVisibility(View.GONE);
-        btnMainRegister.setVisibility(View.VISIBLE);
-        tvWelcome.setVisibility(View.VISIBLE);
-        bottomNavigationView.setVisibility(View.VISIBLE);
-        findViewById(R.id.bottomAppBar).setVisibility(View.VISIBLE);
-        llHeader.setVisibility(View.VISIBLE);
-        ivMainProfile.setVisibility(View.GONE);
-        lvMainPosts.setVisibility(View.VISIBLE);
-        llQuickPostContainer.setVisibility(View.GONE);
-        cvSearchContainer.setVisibility(View.GONE);
-
-        bottomNavigationView.getMenu().findItem(R.id.nav_favorites).setVisible(false);
-        bottomNavigationView.getMenu().findItem(R.id.nav_my_posts).setVisible(false);
-    }
-
-    private void createLoginDialog() {
-        d = new Dialog(this);
-        d.setContentView(R.layout.login_layout);
-        etEmail = d.findViewById(R.id.etEmail);
-        etPass = d.findViewById(R.id.etPass);
-        btnLogin = d.findViewById(R.id.btnLogin);
-        btnLogin.setOnClickListener(this);
-        d.show();
-    }
-
-    private void login() {
-        progressDialog.setMessage("Login Please Wait...");
-        progressDialog.show();
-        mAuth.signInWithEmailAndPassword(etEmail.getText().toString(), etPass.getText().toString())
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        checkUserConnectedStatus();
-                    } else {
-                        Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
-                    }
-                    d.dismiss();
-                    progressDialog.dismiss();
-                });
-    }
-
-    public void createRegisterDialog() {
-        d = new Dialog(this);
-        d.setContentView(R.layout.registerlayout);
-        etEmail = d.findViewById(R.id.etEmail);
-        etPass = d.findViewById(R.id.etPass);
-        etAge = d.findViewById(R.id.etAge);
-        etFirstName = d.findViewById(R.id.etFirstname);
-        etLastName = d.findViewById(R.id.etLastname);
-        spinnerGender = d.findViewById(R.id.spinnerGender);
-        btnReg = d.findViewById(R.id.btnRegister);
-        btnReg.setOnClickListener(this);
-        d.show();
-    }
-
-    private void register() {
-        progressDialog.setMessage("Registering Please Wait...");
-        progressDialog.show();
-        mAuth.createUserWithEmailAndPassword(etEmail.getText().toString(), etPass.getText().toString())
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        adduserDetailsInDB();
-                        checkUserConnectedStatus();
-                    } else {
-                        Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
-                    }
-                    d.dismiss();
-                    progressDialog.dismiss();
-                });
-    }
-
-    private void adduserDetailsInDB() {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) return;
-        String uid = currentUser.getUid();
-        User userObj = new User(uid, etEmail.getText().toString(), etFirstName.getText().toString(), etLastName.getText().toString(), Integer.parseInt(etAge.getText().toString()), uid, spinnerGender.getSelectedItem().toString(), true);
-        firebaseDatabase.getReference("Users").child(uid).setValue(userObj);
     }
 }

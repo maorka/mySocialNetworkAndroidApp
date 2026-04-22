@@ -25,7 +25,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:text="Delete profile"
+        android:text="@string/delete_profile"
         android:textColor="#FFFFFF"
         android:textSize="12sp"
         app:backgroundTint="@color/delete_red"
@@ -55,7 +55,7 @@
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Change Image"
+            android:text="@string/change_image"
             android:textColor="#000000"
             app:strokeColor="#DDDDDD" />
 
@@ -64,21 +64,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="First Name" />
+            android:hint="@string/first_name" />
 
         <EditText
             android:id="@+id/etEditLastName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Last Name" />
+            android:hint="@string/last_name" />
 
         <EditText
             android:id="@+id/etEditAge"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Age"
+            android:hint="@string/age"
             android:inputType="number" />
 
         <Spinner
@@ -92,7 +92,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Save Changes"
+            android:text="@string/save_changes"
             android:textColor="#000000"
             app:backgroundTint="#FFFFFF"
             app:cornerRadius="16dp"
@@ -104,11 +104,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="My Posts"
+            android:text="@string/my_posts"
             android:textColor="#000000"
             app:backgroundTint="#FFFFFF"
             app:cornerRadius="16dp"
             app:strokeColor="#DDDDDD" />
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/logout"
+            android:textColor="#FFFFFF"
+            app:backgroundTint="@color/delete_red"
+            app:cornerRadius="16dp" />
 
     </LinearLayout>
 </RelativeLayout>

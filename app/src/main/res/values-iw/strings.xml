@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">הרשת החברתית שלי</string>
+    <string name="my_favorites">המועדפים שלי</string>
+    <string name="home">בית</string>
+    <string name="search">חיפוש</string>
+    <string name="favorites">מועדפים</string>
+    <string name="my_profile">הפרופיל שלי</string>
+    <string name="my_posts">הפוסטים שלי</string>
+    <string name="save_changes">שמור שינויים</string>
+    <string name="change_image">שנה תמונה</string>
+    <string name="delete_profile">מחק פרופיל</string>
+    <string name="first_name">שם פרטי</string>
+    <string name="last_name">שם משפחה</string>
+    <string name="age">גיל</string>
+    <string name="logout">התנתק</string>
+    <string name="login">התחבר</string>
+    <string name="register">הרשמה</string>
+    <string name="hello_user">שלום, %s</string>
+    <string name="default_user">משתמש</string>
+    <string name="welcome_message">ברוכים הבאים לרשת החברתית שלך</string>
+    <string name="search_hint">חיפוש פוסטים...</string>
+    <string name="post_hint">על מה אתה חושב?</string>
+    <string name="posted_by">על ידי %s</string>
+</resources>

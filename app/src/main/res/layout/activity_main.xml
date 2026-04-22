@@ -25,6 +25,17 @@
             android:textSize="24sp"
             android:visibility="gone" />
 
+        <ImageButton
+            android:id="@+id/btnChangeLang"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_toEndOf="@id/btnEditProfile"
+            android:layout_alignParentTop="true"
+            android:layout_margin="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_language"
+            android:visibility="visible" />
+
         <Button
             android:id="@+id/btnRegister"
             android:layout_width="wrap_content"
@@ -70,7 +81,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:paddingHorizontal="20dp"
-                android:text="Welcome to your Social Network App"
+                android:text="@string/welcome_message"
                 android:textColor="#333333"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -100,52 +111,6 @@
                 app:strokeWidth="2dp"
                 android:visibility="gone"/>
 
-            <!-- Search Bar -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cvSearchContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:layout_marginVertical="8dp"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="8dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/ic_menu_search"
-                        app:tint="#888888" />
-
-                    <EditText
-                        android:id="@+id/etSearchInMain"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@null"
-                        android:hint="Search posts..."
-                        android:padding="8dp"
-                        android:textSize="16sp"
-                        android:inputType="text" />
-
-                    <ImageButton
-                        android:id="@+id/btnClearSearchMain"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@android:drawable/ic_menu_close_clear_cancel"
-                        app:tint="#888888" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
             <!-- Quick Post Bar -->
             <com.google.android.material.card.MaterialCardView
@@ -175,7 +140,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:background="@null"
-                        android:hint="What's on your mind?"
+                        android:hint="@string/post_hint"
                         android:textColor="#333333"
                         android:textSize="16sp" />
 

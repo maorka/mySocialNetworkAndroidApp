@@ -1,9 +1,29 @@
 <resources>
-    <string name="app_name">MyFIrebaseTestApp1</string>
+    <string name="app_name">My social network</string>
     <string-array name="gender_array">
         <item>Male</item>
         <item>Female</item>
         <item>Other</item>
     </string-array>
     <string name="my_favorites">My Favorites</string>
+    <string name="home">Home</string>
+    <string name="search">Search</string>
+    <string name="favorites">Favorites</string>
+    <string name="my_profile">My Profile</string>
+    <string name="my_posts">My Posts</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="change_image">Change Image</string>
+    <string name="delete_profile">Delete Profile</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="age">Age</string>
+    <string name="logout">Logout</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="hello_user">Hello, %s</string>
+    <string name="default_user">User</string>
+    <string name="welcome_message">Welcome to your Social Network App</string>
+    <string name="search_hint">Search posts...</string>
+    <string name="post_hint">What\'s on your mind?</string>
+    <string name="posted_by">by %s</string>
 </resources>

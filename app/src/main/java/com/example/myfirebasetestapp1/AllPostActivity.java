@@ -1,6 +1,7 @@
 package com.example.myfirebasetestapp1;
 
 import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -38,6 +39,12 @@ public class AllPostActivity extends AppCompatActivity {
     private LinearLayout llSearchContainer;
     private String userFirstName = "User";
     private ArrayList<Post> allPostsList; // To keep original data for filtering
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        String lang = LocaleHelper.getLanguage(newBase);
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,7 +129,10 @@ public class AllPostActivity extends AppCompatActivity {
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     if (snapshot.exists()) {
                         userFirstName = snapshot.child("firstname").getValue(String.class);
-                        if (tvProfileWelcomeAll != null) tvProfileWelcomeAll.setText("Hello, " + userFirstName);
+                        if (tvProfileWelcomeAll != null) {
+                            String displayName = (userFirstName != null && !userFirstName.isEmpty()) ? userFirstName : getString(R.string.default_user);
+                            tvProfileWelcomeAll.setText(getString(R.string.hello_user, displayName));
+                        }
                     }
                 }
 
@@ -131,7 +141,9 @@ public class AllPostActivity extends AppCompatActivity {
                 }
             });
         } else {
-            if (tvProfileWelcomeAll != null) tvProfileWelcomeAll.setText("Hello, Guest");
+            if (tvProfileWelcomeAll != null) {
+                tvProfileWelcomeAll.setText(getString(R.string.hello_user, "Guest"));
+            }
         }
     }
 

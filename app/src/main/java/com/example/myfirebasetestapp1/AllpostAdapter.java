@@ -26,6 +26,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -83,7 +84,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
 
 
         tvTitle.setText(temp.title);
-        tvAuthor.setText("by " + temp.authorFirstName);
+        tvAuthor.setText(context.getString(R.string.posted_by, temp.authorFirstName));
         tvLikesCount.setText(String.valueOf(temp.likes));
 
         // Fetch comments count
@@ -110,10 +111,15 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.hasChild("profileImage")) {
                     String base64 = snapshot.child("profileImage").getValue(String.class);
-                    if (base64 != null) {
-                        byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                        ivAuthorProfile.setImageBitmap(bitmap);
+                    if (base64 != null && !base64.isEmpty()) {
+                        try {
+                            byte[] imageBytes = Base64.decode(base64, Base64.DEFAULT);
+                            Glide.with(context)
+                                    .load(imageBytes)
+                                    .into(ivAuthorProfile);
+                        } catch (Exception e) {
+                            Log.e("AllpostAdapter", "Error decoding profile image", e);
+                        }
                     }
                 }
             }
@@ -121,13 +127,28 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
             public void onCancelled(@NonNull DatabaseError error) {}
         });
 
-        if (temp.getPostImage() != null) {
-            byte[] imageBytes = Base64.decode(temp.getPostImage(), Base64.DEFAULT);
-            Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-            ivPostImage.setImageBitmap(bitmap);
-            ivPostImage.setVisibility(View.VISIBLE);
-            
-            ivPostImage.setOnClickListener(v -> showImagePreviewDialog(bitmap));
+        if (temp.getPostImage() != null && !temp.getPostImage().isEmpty()) {
+            try {
+                byte[] imageBytes = Base64.decode(temp.getPostImage(), Base64.DEFAULT);
+                Glide.with(context)
+                        .asBitmap()
+                        .load(imageBytes)
+                        .into(new com.bumptech.glide.request.target.CustomTarget<Bitmap>() {
+                            @Override
+                            public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
+                                ivPostImage.setImageBitmap(resource);
+                                ivPostImage.setVisibility(View.VISIBLE);
+                                ivPostImage.setOnClickListener(v -> showImagePreviewDialog(resource));
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable android.graphics.drawable.Drawable placeholder) {
+                            }
+                        });
+            } catch (Exception e) {
+                Log.e("AllpostAdapter", "Error decoding post image", e);
+                ivPostImage.setVisibility(View.GONE);
+            }
         } else {
             ivPostImage.setVisibility(View.GONE);
         }
