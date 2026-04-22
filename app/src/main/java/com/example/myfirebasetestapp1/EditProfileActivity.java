@@ -46,7 +46,7 @@ public class EditProfileActivity extends AppCompatActivity {
     private static final int IMAGE_PICKER_REQUEST = 1;
     private EditText etFirstName, etLastName, etAge;
     private Spinner spinnerGender;
-    private Button btnSaveChanges, btnChangeProfileImage, btnDeleteProfile;
+    private Button btnSaveChanges, btnChangeProfileImage, btnDeleteProfile, btnMyPosts;
     private ImageButton btnBack;
     private ShapeableImageView ivProfileImage;
     private DatabaseReference userRef;
@@ -70,6 +70,7 @@ public class EditProfileActivity extends AppCompatActivity {
         ivProfileImage = findViewById(R.id.ivEditProfileImage);
         btnDeleteProfile = findViewById(R.id.btnDeleteProfile);
         btnBack = findViewById(R.id.btnBackFromEdit);
+        btnMyPosts = findViewById(R.id.btnMyPosts);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.gender_array, android.R.layout.simple_spinner_item);
@@ -89,6 +90,14 @@ public class EditProfileActivity extends AppCompatActivity {
 
         btnChangeProfileImage.setOnClickListener(v -> openImagePicker());
         btnSaveChanges.setOnClickListener(v -> saveChanges());
+
+        if (btnMyPosts != null) {
+            btnMyPosts.setOnClickListener(v -> {
+                Intent intent = new Intent(EditProfileActivity.this, AllPostActivity.class);
+                intent.putExtra("showMyPosts", true);
+                startActivity(intent);
+            });
+        }
         
         if (btnDeleteProfile != null) {
             btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmationDialog());

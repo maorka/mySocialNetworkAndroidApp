@@ -99,5 +99,16 @@
             app:strokeColor="#DDDDDD"
             app:strokeWidth="1dp" />
 
+        <Button
+            android:id="@+id/btnMyPosts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="My Posts"
+            android:textColor="#000000"
+            app:backgroundTint="#FFFFFF"
+            app:cornerRadius="16dp"
+            app:strokeColor="#DDDDDD" />
+
     </LinearLayout>
 </RelativeLayout>

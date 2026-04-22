@@ -30,13 +30,14 @@ public class AllPostActivity extends AppCompatActivity {
     ArrayList<Post> posts;
     AllpostAdapter allpostAdapter;
     private DatabaseReference database;
-    private ImageButton btnBackToMenu, btnOpenSearch;
+    private ImageButton btnBackToMenu;
     private TextView tvProfileWelcomeAll;
     private FirebaseAuth mAuth;
-    private EditText etQuickPost;
-    private ImageButton btnQuickSend;
-    private LinearLayout llQuickPost;
+    private EditText etSearchPosts;
+    private ImageButton btnClearSearch;
+    private LinearLayout llSearchContainer;
     private String userFirstName = "User";
+    private ArrayList<Post> allPostsList; // To keep original data for filtering
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,11 +48,10 @@ public class AllPostActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance().getReference("Posts");
         lv = (ListView) findViewById(R.id.lv);
         btnBackToMenu = findViewById(R.id.btnBackToMenu);
-        btnOpenSearch = findViewById(R.id.btnOpenSearch);
         tvProfileWelcomeAll = (TextView) findViewById(R.id.tvProfileWelcomeAll);
-        etQuickPost = (EditText) findViewById(R.id.etQuickPost);
-        btnQuickSend = (ImageButton) findViewById(R.id.btnQuickSend);
-        llQuickPost = (LinearLayout) findViewById(R.id.llQuickPost);
+        etSearchPosts = (EditText) findViewById(R.id.etSearchPosts);
+        btnClearSearch = (ImageButton) findViewById(R.id.btnClearSearch);
+        llSearchContainer = (LinearLayout) findViewById(R.id.llSearchContainer);
 
         btnBackToMenu.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -60,70 +60,62 @@ public class AllPostActivity extends AppCompatActivity {
             }//finish->return to main menu
         });
 
-        btnOpenSearch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(AllPostActivity.this, SearchActivity.class));
-            }
-        });
+        if (btnClearSearch != null) {
+            btnClearSearch.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    etSearchPosts.setText("");
+                }
+            });
+        }
 
-        btnQuickSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendQuickPost();
-            }
-        });
+        if (etSearchPosts != null) {
+            etSearchPosts.addTextChangedListener(new android.text.TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    filterPosts(s.toString());
+                    if (btnClearSearch != null) {
+                        btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(android.text.Editable s) {}
+            });
+        }
 
         checkUserStatus();
         this.retrievedata();
     }
 
-    private void sendQuickPost() {
-        // function to send quick post,logic
-        String message = etQuickPost.getText().toString().trim();
-        if (message.isEmpty()) {
-            Toast.makeText(this, "Please write something", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private void filterPosts(String query) {
+        if (allPostsList == null) return;
+        ArrayList<Post> filteredList = new ArrayList<>();
+        String lowerCaseQuery = query.toLowerCase().trim();
 
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            String uid = user.getUid();
-            String key = database.push().getKey();
-            
-            String title, body;
-            // logic for title and body based on message length
-            if (message.length() <= 20)
-            {
-                title = message;
-                body = "";
-            } else {
-                title = message.substring(0, 20) + "...";//first 20 characters will be the title
-                body = message;
-            }
-
-            Post quickPost = new Post(uid, title, body, 0, key, userFirstName);
-            
-            if (key != null) {
-                database.child(key).setValue(quickPost).addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        etQuickPost.setText("");
-                        Log.d("QuickPost", "Quick post sent successfully");
-                        Toast.makeText(AllPostActivity.this, "Posted!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.e("QuickPost", "Failed to send quick post", task.getException());
-                        Toast.makeText(AllPostActivity.this, "Failed to post", Toast.LENGTH_SHORT).show();
-                    }
-                });
+        if (lowerCaseQuery.isEmpty()) {
+            filteredList.addAll(allPostsList);
+        } else {
+            for (Post post : allPostsList) {
+                if ((post.title != null && post.title.toLowerCase().contains(lowerCaseQuery)) ||
+                    (post.body != null && post.body.toLowerCase().contains(lowerCaseQuery)) ||
+                    (post.authorFirstName != null && post.authorFirstName.toLowerCase().contains(lowerCaseQuery))) {
+                    filteredList.add(post);
+                }
             }
         }
+        allpostAdapter = new AllpostAdapter(AllPostActivity.this, 0, 0, filteredList);
+        lv.setAdapter(allpostAdapter);
     }
 
     private void checkUserStatus() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
             String uid = user.getUid();
-            if (llQuickPost != null) llQuickPost.setVisibility(View.VISIBLE);
+            if (llSearchContainer != null) llSearchContainer.setVisibility(View.VISIBLE);
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("Users").child(uid);
             userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
@@ -140,7 +132,6 @@ public class AllPostActivity extends AppCompatActivity {
             });
         } else {
             if (tvProfileWelcomeAll != null) tvProfileWelcomeAll.setText("Hello, Guest");
-            if (llQuickPost != null) llQuickPost.setVisibility(View.GONE);
         }
     }
 
@@ -155,26 +146,33 @@ public class AllPostActivity extends AppCompatActivity {
         database.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                posts = new ArrayList<Post>();
+                allPostsList = new ArrayList<Post>();
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Post p = dataSnapshot.getValue(Post.class);
                     if (p != null) {
                         if (showMyPosts) {
                             if (currentUserUid != null && p.uid.equals(currentUserUid)) {
-                                posts.add(p);
+                                allPostsList.add(p);
                             }
                         } else if (showFavorites) {
                             if (currentUserUid != null && p.favoriters != null && p.favoriters.containsKey(currentUserUid)) {
-                                posts.add(p);
+                                allPostsList.add(p);
                             }
                         } else {
-                            posts.add(p);
+                            allPostsList.add(p);
                         }
                     }
                 }
-                Collections.reverse(posts);
-                allpostAdapter = new AllpostAdapter(AllPostActivity.this, 0, 0, posts);
-                lv.setAdapter(allpostAdapter);
+                Collections.reverse(allPostsList);
+                
+                // If there's an active search, filter the new data
+                String currentQuery = etSearchPosts.getText().toString();
+                if (!currentQuery.isEmpty()) {
+                    filterPosts(currentQuery);
+                } else {
+                    allpostAdapter = new AllpostAdapter(AllPostActivity.this, 0, 0, allPostsList);
+                    lv.setAdapter(allpostAdapter);
+                }
             }
 
             @Override

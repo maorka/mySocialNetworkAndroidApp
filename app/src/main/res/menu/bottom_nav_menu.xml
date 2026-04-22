@@ -3,23 +3,25 @@
     <item
         android:id="@+id/nav_all_posts"
         android:icon="@android:drawable/ic_menu_agenda"
-        android:title="דף הבית" />
+        android:title="Home" />
     <item
         android:id="@+id/nav_search"
         android:icon="@android:drawable/ic_menu_search"
-        android:title="חיפוש" />
+        android:title="Search" />
 
+    <!-- do not delete the item below,this is new post button-->
     <item
         android:id="@+id/placeholder"
         android:title=""
-        android:enabled="false" />
+        android:enabled="false"
+    />
 
     <item
         android:id="@+id/nav_favorites"
         android:icon="@drawable/ic_star_outline"
-        android:title="מועדפים" />
+        android:title="Favorites" />
     <item
         android:id="@+id/nav_my_posts"
         android:icon="@android:drawable/ic_menu_myplaces"
-        android:title="אזור אישי" />
+        android:title="My profile" />
 </menu>

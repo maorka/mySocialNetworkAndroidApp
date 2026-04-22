@@ -10,7 +10,7 @@
         android:layout_centerInParent="true"
         android:text="My social network"
         android:textColor="#FFFFFF"
-        android:textSize="65sp"
+        android:textSize="40sp"
         android:textStyle="bold" />
 
 </RelativeLayout>
