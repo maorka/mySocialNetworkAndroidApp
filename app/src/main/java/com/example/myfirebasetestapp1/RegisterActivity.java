@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import android.content.Context;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -30,6 +31,13 @@ public class RegisterActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private DatabaseReference usersDatabase;
     private ProgressDialog progressDialog;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        // Get saved language from SharedPreferences and apply it
+        String lang = LocaleHelper.getLanguage(newBase);
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

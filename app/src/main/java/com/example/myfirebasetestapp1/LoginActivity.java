@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
+import android.content.Context;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -17,6 +18,13 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private FirebaseAuth mAuth;
     private ProgressDialog progressDialog;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        // Get saved language from SharedPreferences and apply it
+        String lang = LocaleHelper.getLanguage(newBase);
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

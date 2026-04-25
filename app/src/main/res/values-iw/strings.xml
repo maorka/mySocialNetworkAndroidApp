@@ -25,4 +25,6 @@
     <string name="title_hint">כותרת</string>
     <string name="save_post">שמור פוסט</string>
     <string name="select_image">בחר תמונה</string>
+    <string name="email">אימייל</string>
+    <string name="password">סיסמה</string>
 </resources>

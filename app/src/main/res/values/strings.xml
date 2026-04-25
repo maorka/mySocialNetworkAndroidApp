@@ -30,4 +30,6 @@
     <string name="title_hint">Title</string>
     <string name="save_post">Save Post</string>
     <string name="select_image">Select Image</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
 </resources>
