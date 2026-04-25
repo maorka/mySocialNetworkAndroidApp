@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void attachBaseContext(Context newBase) {
+        // Get saved language and apply it
         String lang = LocaleHelper.getLanguage(newBase);
         super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
     }
@@ -214,6 +215,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ivMainProfile.setVisibility(View.VISIBLE);
             tvWelcome.setVisibility(View.GONE);
             llQuickPostContainer.setVisibility(View.VISIBLE);
+            btnChangeLang.setVisibility(View.VISIBLE);
+
+            bottomNavigationView.getMenu().findItem(R.id.nav_favorites).setVisible(true);
+            bottomNavigationView.getMenu().findItem(R.id.nav_my_posts).setVisible(true);
 
             DatabaseReference userRef = firebaseDatabase.getReference("Users").child(user.getUid());
             userRef.addValueEventListener(new ValueEventListener() {
@@ -222,7 +227,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (snapshot.exists()) {
                         String firstName = snapshot.child("firstname").getValue(String.class);
                         String profileImage = snapshot.child("profileImage").getValue(String.class);
-                        tvProfileWelcome.setText("Hello, " + (firstName != null ? firstName : "User"));
+                        String displayName = (firstName != null && !firstName.isEmpty()) ? firstName : getString(R.string.default_user);
+                        tvProfileWelcome.setText(getString(R.string.hello_user, displayName));
                         if (profileImage != null && !profileImage.isEmpty()) {
                             try {
                                 byte[] imageBytes = Base64.decode(profileImage, Base64.DEFAULT);
@@ -247,6 +253,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ivMainProfile.setVisibility(View.GONE);
             tvWelcome.setVisibility(View.VISIBLE);
             llQuickPostContainer.setVisibility(View.GONE);
+            btnChangeLang.setVisibility(View.VISIBLE);
+
+            bottomNavigationView.getMenu().findItem(R.id.nav_favorites).setVisible(false);
+            bottomNavigationView.getMenu().findItem(R.id.nav_my_posts).setVisible(false);
         }
     }
 

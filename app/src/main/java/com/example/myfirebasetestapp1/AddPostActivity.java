@@ -30,6 +30,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import android.content.Context;
 
 public class AddPostActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int IMAGE_PICKER_REQUEST = 1;
@@ -39,6 +40,13 @@ public class AddPostActivity extends AppCompatActivity implements View.OnClickLi
     ImageView ivPostImagePreview;
     FirebaseDatabase firebaseDatabase;
     private String selectedImageBase64 = null;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        // Get saved language from SharedPreferences and apply it
+        String lang = LocaleHelper.getLanguage(newBase);
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

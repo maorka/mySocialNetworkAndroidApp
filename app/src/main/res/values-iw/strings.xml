@@ -21,4 +21,8 @@
     <string name="search_hint">חיפוש פוסטים...</string>
     <string name="post_hint">על מה אתה חושב?</string>
     <string name="posted_by">על ידי %s</string>
+    <string name="create_post">צור פוסט חדש</string>
+    <string name="title_hint">כותרת</string>
+    <string name="save_post">שמור פוסט</string>
+    <string name="select_image">בחר תמונה</string>
 </resources>

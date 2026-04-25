@@ -26,4 +26,8 @@
     <string name="search_hint">Search posts...</string>
     <string name="post_hint">What\'s on your mind?</string>
     <string name="posted_by">by %s</string>
+    <string name="create_post">Create New Post</string>
+    <string name="title_hint">Title</string>
+    <string name="save_post">Save Post</string>
+    <string name="select_image">Select Image</string>
 </resources>
