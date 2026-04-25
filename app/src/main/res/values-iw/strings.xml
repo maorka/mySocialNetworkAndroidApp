@@ -1,4 +1,9 @@
 <resources>
+    <string-array name="gender_array">
+        <item>זכר</item>
+        <item>נקבה</item>
+        <item>אחר</item>
+    </string-array>
     <string name="app_name">הרשת החברתית שלי</string>
     <string name="my_favorites">המועדפים שלי</string>
     <string name="home">בית</string>

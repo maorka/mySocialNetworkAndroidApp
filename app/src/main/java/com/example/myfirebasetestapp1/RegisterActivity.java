@@ -58,7 +58,7 @@ public class RegisterActivity extends AppCompatActivity {
         btnPickImage = findViewById(R.id.btnPickImage);
         btnRegister = findViewById(R.id.btnRegister);
 
-        String[] genders = {"Male", "Female", "Other"};
+        String[] genders = getResources().getStringArray(R.array.gender_array);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, genders);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerGender.setAdapter(adapter);
