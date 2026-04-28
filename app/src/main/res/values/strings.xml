@@ -32,4 +32,12 @@
     <string name="select_image">Select Image</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
+    <string name="delete_profile_message">Are you sure you want to delete your profile?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="add_comment_hint">Add a comment...</string>
+    <string name="send_comment">Send</string>
+    <string name="login_to_comment">Please log in to comment.</string>
 </resources>

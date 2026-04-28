@@ -32,4 +32,12 @@
     <string name="select_image">בחר תמונה</string>
     <string name="email">אימייל</string>
     <string name="password">סיסמה</string>
+    <string name="delete_profile_message">האם אתה בטוח שברצונך למחוק את הפרופיל שלך?</string>
+    <string name="yes">כן</string>
+    <string name="no">לא</string>
+    <string name="edit">ערוך</string>
+    <string name="delete">מחק</string>
+    <string name="add_comment_hint">הוסף תגובה...</string>
+    <string name="send_comment">שלח</string>
+    <string name="login_to_comment">אנא התחבר כדי להגיב.</string>
 </resources>

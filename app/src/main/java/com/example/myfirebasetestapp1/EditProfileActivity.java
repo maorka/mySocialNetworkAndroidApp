@@ -128,10 +128,10 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private void showDeleteConfirmationDialog() {
         new AlertDialog.Builder(this)
-                .setTitle("Delete Profile")
-                .setMessage("Are you sure you want to delete your profile?")
-                .setPositiveButton("Yes", (dialog, which) -> deleteCurrentUserAccount())
-                .setNegativeButton("No", null)
+                .setTitle(R.string.delete_profile)
+                .setMessage(R.string.delete_profile_message)
+                .setPositiveButton(R.string.yes, (dialog, which) -> deleteCurrentUserAccount())
+                .setNegativeButton(R.string.no, null)
                 .show();
     }
 
