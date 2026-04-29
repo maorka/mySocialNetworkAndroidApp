@@ -40,4 +40,6 @@
     <string name="add_comment_hint">הוסף תגובה...</string>
     <string name="send_comment">שלח</string>
     <string name="login_to_comment">אנא התחבר כדי להגיב.</string>
+    <string name="edit_post">עריכת פוסט</string>
+    <string name="post_content_hint">תוכן הפוסט</string>
 </resources>

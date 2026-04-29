@@ -36,7 +36,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="Edit Post"
+                android:text="@string/edit_post"
                 android:textColor="#333333"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -73,10 +73,11 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@null"
-                        android:hint="Title"
+                        android:hint="@string/title_hint"
                         android:textColor="#333333"
                         android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:textAlignment="viewStart" />
 
                     <View
                         android:layout_width="match_parent"
@@ -90,11 +91,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@null"
-                        android:gravity="top"
-                        android:hint="Post content"
+                        android:gravity="top|start"
+                        android:hint="@string/post_content_hint"
                         android:minHeight="150dp"
                         android:textColor="#333333"
-                        android:textSize="16sp" />
+                        android:textSize="16sp"
+                        android:textAlignment="viewStart" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -123,7 +125,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:text="Change Image"
+            android:text="@string/change_image"
             android:textColor="#000000"
             app:backgroundTint="#FFFFFF"
             app:cornerRadius="12dp"
@@ -135,7 +137,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:text="Save Changes"
+            android:text="@string/save_changes"
             android:textColor="#000000"
             app:backgroundTint="#FFFFFF"
             app:cornerRadius="12dp"
