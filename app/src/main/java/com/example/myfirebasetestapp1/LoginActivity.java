@@ -12,19 +12,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import android.content.Context;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends LanguageActivity {
 
     private EditText etEmail, etPass;
     private Button btnLogin;
     private FirebaseAuth mAuth;
     private ProgressDialog progressDialog;
-
-    @Override
-    protected void attachBaseContext(Context newBase) {
-        // Get saved language from SharedPreferences and apply it
-        String lang = LocaleHelper.getLanguage(newBase);
-        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
-    }
+    private android.widget.ImageButton btnChangeLang;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +31,12 @@ public class LoginActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPass = findViewById(R.id.etPass);
         btnLogin = findViewById(R.id.btnLogin);
+        btnChangeLang = findViewById(R.id.btnChangeLang);
 
         btnLogin.setOnClickListener(v -> loginUser());
+        if (btnChangeLang != null) {
+            btnChangeLang.setOnClickListener(v -> showLanguageMenu(v));
+        }
     }
 
     private void loginUser() {

@@ -81,6 +81,14 @@
                     app:tint="#888888" />
             </LinearLayout>
 
+            <ImageButton
+                android:id="@+id/btnChangeLang"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_language" />
+
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

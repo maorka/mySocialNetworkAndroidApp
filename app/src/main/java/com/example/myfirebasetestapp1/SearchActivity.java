@@ -21,10 +21,10 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends LanguageActivity {
 
     private EditText etSearchQuery;
-    private ImageButton btnBackFromSearch, btnClearSearch;
+    private ImageButton btnBackFromSearch, btnClearSearch, btnChangeLang;
     private ListView lvSearchResults;
     private ArrayList<Post> allPosts;
     private ArrayList<Post> filteredPosts;
@@ -40,6 +40,11 @@ public class SearchActivity extends AppCompatActivity {
         btnBackFromSearch = findViewById(R.id.btnBackFromSearch);
         btnClearSearch = findViewById(R.id.btnClearSearch);
         lvSearchResults = findViewById(R.id.lvSearchResults);
+        btnChangeLang = findViewById(R.id.btnChangeLang);
+
+        if (btnChangeLang != null) {
+            btnChangeLang.setOnClickListener(v -> showLanguageMenu(v));
+        }
 
         database = FirebaseDatabase.getInstance().getReference("Posts");
         allPosts = new ArrayList<>();

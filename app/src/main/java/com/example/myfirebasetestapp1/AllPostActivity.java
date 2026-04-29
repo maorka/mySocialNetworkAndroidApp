@@ -26,12 +26,12 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class AllPostActivity extends AppCompatActivity {
+public class AllPostActivity extends LanguageActivity {
     ListView lv;
     ArrayList<Post> posts;
     AllpostAdapter allpostAdapter;
     private DatabaseReference database;
-    private ImageButton btnBackToMenu;
+    private ImageButton btnBackToMenu, btnChangeLang;
     private TextView tvProfileWelcomeAll;
     private FirebaseAuth mAuth;
     private EditText etSearchPosts;
@@ -39,12 +39,6 @@ public class AllPostActivity extends AppCompatActivity {
     private LinearLayout llSearchContainer;
     private String userFirstName = "User";
     private ArrayList<Post> allPostsList; // To keep original data for filtering
-
-    @Override
-    protected void attachBaseContext(Context newBase) {
-        String lang = LocaleHelper.getLanguage(newBase);
-        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +49,15 @@ public class AllPostActivity extends AppCompatActivity {
         database = FirebaseDatabase.getInstance().getReference("Posts");
         lv = (ListView) findViewById(R.id.lv);
         btnBackToMenu = findViewById(R.id.btnBackToMenu);
+        btnChangeLang = findViewById(R.id.btnChangeLang);
         tvProfileWelcomeAll = (TextView) findViewById(R.id.tvProfileWelcomeAll);
         etSearchPosts = (EditText) findViewById(R.id.etSearchPosts);
         btnClearSearch = (ImageButton) findViewById(R.id.btnClearSearch);
         llSearchContainer = (LinearLayout) findViewById(R.id.llSearchContainer);
+
+        if (btnChangeLang != null) {
+            btnChangeLang.setOnClickListener(v -> showLanguageMenu(v));
+        }
 
         btnBackToMenu.setOnClickListener(new View.OnClickListener() {
             @Override

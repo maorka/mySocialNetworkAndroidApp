@@ -23,6 +23,7 @@
     <string name="hello_user">שלום, %s</string>
     <string name="default_user">משתמש</string>
     <string name="welcome_message">ברוכים הבאים לרשת החברתית שלך</string>
+    <string name="open_page_message">הרשת החברתית שלי </string>
     <string name="search_hint">חיפוש פוסטים...</string>
     <string name="post_hint">על מה אתה חושב?</string>
     <string name="posted_by">על ידי %s</string>

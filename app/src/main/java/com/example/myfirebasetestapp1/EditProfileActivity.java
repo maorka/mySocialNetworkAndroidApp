@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EditProfileActivity extends AppCompatActivity {
+public class EditProfileActivity extends LanguageActivity {
 
     private FirebaseDatabase firebaseDatabase;
     private FirebaseAuth mAuth;
@@ -48,16 +48,10 @@ public class EditProfileActivity extends AppCompatActivity {
     private EditText etFirstName, etLastName, etAge;
     private Spinner spinnerGender;
     private Button btnSaveChanges, btnChangeProfileImage, btnDeleteProfile, btnMyPosts, btnLogout;
-    private ImageButton btnBack;
+    private ImageButton btnBack, btnChangeLang;
     private ShapeableImageView ivProfileImage;
     private DatabaseReference userRef;
     private String selectedImageBase64 = null;
-
-    @Override
-    protected void attachBaseContext(Context newBase) {
-        String lang = LocaleHelper.getLanguage(newBase);
-        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +73,11 @@ public class EditProfileActivity extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBackFromEdit);
         btnMyPosts = findViewById(R.id.btnMyPosts);
         btnLogout = findViewById(R.id.btnLogout);
+        btnChangeLang = findViewById(R.id.btnChangeLang);
+
+        if (btnChangeLang != null) {
+            btnChangeLang.setOnClickListener(v -> showLanguageMenu(v));
+        }
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.gender_array, android.R.layout.simple_spinner_item);

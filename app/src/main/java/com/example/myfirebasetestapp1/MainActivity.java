@@ -35,7 +35,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends LanguageActivity implements View.OnClickListener {
 
     private FirebaseAuth mAuth;
     private FirebaseDatabase firebaseDatabase;
@@ -62,13 +62,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Search
     private ArrayList<Post> fullPostsList;
     private ImageButton btnChangeLang;
-
-    @Override
-    protected void attachBaseContext(Context newBase) {
-        // Get saved language and apply it
-        String lang = LocaleHelper.getLanguage(newBase);
-        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         btnMainLogin.setOnClickListener(this);
         btnMainRegister.setOnClickListener(this);
-        btnChangeLang.setOnClickListener(v -> showLanguageMenu());
+        btnChangeLang.setOnClickListener(v -> showLanguageMenu(v));
 
         btnAddPost.setOnClickListener(v -> {
             startActivity(new Intent(MainActivity.this, AddPostActivity.class));
@@ -117,28 +110,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         loadPosts();
         updateUI();
         updateBottomNavTitles();
-    }
-
-    private void showLanguageMenu() {
-        PopupMenu popupMenu = new PopupMenu(this, btnChangeLang);
-        popupMenu.getMenu().add(0, 1, 0, "English");
-        popupMenu.getMenu().add(0, 2, 1, "עברית");
-
-        popupMenu.setOnMenuItemClickListener(item -> {
-            String lang = "en";
-            if (item.getItemId() == 2) {
-                lang = "iw";
-            }
-            
-            if (!lang.equals(LocaleHelper.getLanguage(this))) {
-                LocaleHelper.setLocale(this, lang);
-                Intent intent = getIntent();
-                finish();
-                startActivity(intent);
-            }
-            return true;
-        });
-        popupMenu.show();
     }
 
     private void updateBottomNavTitles() {

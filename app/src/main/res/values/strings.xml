@@ -23,6 +23,7 @@
     <string name="hello_user">Hello, %s</string>
     <string name="default_user">User</string>
     <string name="welcome_message">Welcome to your Social Network App</string>
+    <string name="open_page_message">My Social Network </string>
     <string name="search_hint">Search posts...</string>
     <string name="post_hint">What\'s on your mind?</string>
     <string name="posted_by">by %s</string>

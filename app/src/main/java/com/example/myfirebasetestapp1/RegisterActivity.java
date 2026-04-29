@@ -20,24 +20,18 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import android.content.Context;
 
-public class RegisterActivity extends AppCompatActivity {
+public class RegisterActivity extends LanguageActivity {
 
     private EditText etEmail, etPass, etFirstname, etLastname, etAge;
     private Spinner spinnerGender;
     private ImageView ivProfilePreview;
     private Button btnPickImage, btnRegister;
     private Uri imageUri;
+    private android.widget.ImageButton btnChangeLang;
 
     private FirebaseAuth mAuth;
     private DatabaseReference usersDatabase;
     private ProgressDialog progressDialog;
-
-    @Override
-    protected void attachBaseContext(Context newBase) {
-        // Get saved language from SharedPreferences and apply it
-        String lang = LocaleHelper.getLanguage(newBase);
-        super.attachBaseContext(LocaleHelper.setLocale(newBase, lang));
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +51,11 @@ public class RegisterActivity extends AppCompatActivity {
         ivProfilePreview = findViewById(R.id.ivProfilePreview);
         btnPickImage = findViewById(R.id.btnPickImage);
         btnRegister = findViewById(R.id.btnRegister);
+        btnChangeLang = findViewById(R.id.btnChangeLang);
+
+        if (btnChangeLang != null) {
+            btnChangeLang.setOnClickListener(v -> showLanguageMenu(v));
+        }
 
         String[] genders = getResources().getStringArray(R.array.gender_array);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, genders);

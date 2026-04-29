@@ -32,6 +32,15 @@
                 android:src="@android:drawable/ic_menu_revert"
                 app:tint="#333333" />
 
+            <ImageButton
+                android:id="@+id/btnChangeLang"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_language" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

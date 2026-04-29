@@ -31,7 +31,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class EditPostActivity extends AppCompatActivity implements View.OnClickListener {
+public class EditPostActivity extends LanguageActivity implements View.OnClickListener {
     private static final int IMAGE_PICKER_REQUEST = 1;
     private static final int CAMERA_PERMISSION_CODE = 100;
     private EditText etTitle, etBody;
@@ -40,6 +40,7 @@ public class EditPostActivity extends AppCompatActivity implements View.OnClickL
     private DatabaseReference postRef;
     private Post currentPost;
     private String selectedImageBase64 = null;
+    private ImageButton btnChangeLang;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,9 +53,14 @@ public class EditPostActivity extends AppCompatActivity implements View.OnClickL
         btnChangeImage = findViewById(R.id.btnChangeImage);
         ivPostImage = findViewById(R.id.ivEditPostImage);
         ImageButton btnBack = findViewById(R.id.btnBack);
+        btnChangeLang = findViewById(R.id.btnChangeLang);
 
         if (btnBack != null) {
             btnBack.setOnClickListener(v -> finish());
+        }
+
+        if (btnChangeLang != null) {
+            btnChangeLang.setOnClickListener(v -> showLanguageMenu(v));
         }
 
         btnSave.setOnClickListener(this);
