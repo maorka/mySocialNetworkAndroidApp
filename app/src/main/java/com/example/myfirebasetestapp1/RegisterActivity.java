@@ -88,7 +88,7 @@ public class RegisterActivity extends LanguageActivity {
         String gender = spinnerGender.getSelectedItem().toString();
 
         if (email.isEmpty() || pass.isEmpty() || firstname.isEmpty() || lastname.isEmpty() || ageStr.isEmpty()) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.fill_all_fields, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -102,16 +102,18 @@ public class RegisterActivity extends LanguageActivity {
                 usersDatabase.child(uid).setValue(user).addOnCompleteListener(dbTask -> {
                     progressDialog.dismiss();
                     if (dbTask.isSuccessful()) {
-                        Toast.makeText(RegisterActivity.this, "Registration Successful!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RegisterActivity.this, R.string.registration_success, Toast.LENGTH_SHORT).show();
                         startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(RegisterActivity.this, "Database Error: " + dbTask.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        String errorMsg = dbTask.getException() != null ? dbTask.getException().getMessage() : "Unknown error";
+                        Toast.makeText(RegisterActivity.this, getString(R.string.database_error_prefix, errorMsg), Toast.LENGTH_SHORT).show();
                     }
                 });
             } else {
                 progressDialog.dismiss();
-                Toast.makeText(RegisterActivity.this, "Registration Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                String errorMsg = task.getException() != null ? task.getException().getMessage() : "Unknown error";
+                Toast.makeText(RegisterActivity.this, getString(R.string.registration_failed_prefix, errorMsg), Toast.LENGTH_SHORT).show();
             }
         });
     }

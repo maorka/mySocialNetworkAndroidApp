@@ -44,7 +44,7 @@ public class LoginActivity extends LanguageActivity {
         String pass = etPass.getText().toString().trim();
 
         if (email.isEmpty() || pass.isEmpty()) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.fill_all_fields, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -54,11 +54,12 @@ public class LoginActivity extends LanguageActivity {
         mAuth.signInWithEmailAndPassword(email, pass).addOnCompleteListener(task -> {
             progressDialog.dismiss();
             if (task.isSuccessful()) {
-                Toast.makeText(LoginActivity.this, "Login Successful!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, R.string.login_success, Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             } else {
-                Toast.makeText(LoginActivity.this, "Login Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                String errorMsg = task.getException() != null ? task.getException().getMessage() : "Unknown error";
+                Toast.makeText(LoginActivity.this, getString(R.string.login_failed_prefix, errorMsg), Toast.LENGTH_SHORT).show();
             }
         });
     }

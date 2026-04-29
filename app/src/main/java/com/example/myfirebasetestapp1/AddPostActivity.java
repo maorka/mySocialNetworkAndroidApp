@@ -91,7 +91,7 @@ public class AddPostActivity extends LanguageActivity implements View.OnClickLis
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openImagePicker();
             } else {
-                Toast.makeText(this, "Camera permission is required to use the camera", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.camera_permission_required, Toast.LENGTH_SHORT).show();
                 openImagePicker(); // Still open picker, gallery might work
             }
         }
@@ -145,7 +145,7 @@ public class AddPostActivity extends LanguageActivity implements View.OnClickLis
     private void savePost() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.user_not_logged_in, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -171,10 +171,10 @@ public class AddPostActivity extends LanguageActivity implements View.OnClickLis
                         postRef.setValue(newPost).addOnCompleteListener(task ->
                         {
                             if (task.isSuccessful()) {
-                                Toast.makeText(AddPostActivity.this, "Post created successfully", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(AddPostActivity.this, R.string.post_created_success, Toast.LENGTH_SHORT).show();
                                 finish();
                             } else {
-                                Toast.makeText(AddPostActivity.this, "Failed to create post", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(AddPostActivity.this, R.string.post_created_failed, Toast.LENGTH_SHORT).show();
                             }
                         });
                     }
@@ -183,7 +183,7 @@ public class AddPostActivity extends LanguageActivity implements View.OnClickLis
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                Toast.makeText(AddPostActivity.this, "Database error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(AddPostActivity.this, getString(R.string.database_error_prefix, databaseError.getMessage()), Toast.LENGTH_SHORT).show();
             }
         });
     }

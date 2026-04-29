@@ -86,7 +86,7 @@ public class EditProfileActivity extends LanguageActivity {
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
-            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.user_not_logged_in, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -137,7 +137,7 @@ public class EditProfileActivity extends LanguageActivity {
     private void deleteCurrentUserAccount() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
-            Toast.makeText(this, "No user logged in to delete.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.no_user_to_delete, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -160,18 +160,18 @@ public class EditProfileActivity extends LanguageActivity {
                         currentUser.delete().addOnCompleteListener(authTask -> {
                             progressDialog.dismiss();
                             if (authTask.isSuccessful()) {
-                                Toast.makeText(EditProfileActivity.this, "Account deleted successfully.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(EditProfileActivity.this, R.string.account_deleted_success, Toast.LENGTH_SHORT).show();
                                 Intent intent = new Intent(EditProfileActivity.this, MainActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                                 startActivity(intent);
                                 finish();
                             } else {
-                                Toast.makeText(EditProfileActivity.this, "Failed to delete account auth.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(EditProfileActivity.this, R.string.account_delete_failed_auth, Toast.LENGTH_SHORT).show();
                             }
                         });
                     } else {
                         progressDialog.dismiss();
-                        Toast.makeText(EditProfileActivity.this, "Failed to delete user profile.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditProfileActivity.this, R.string.account_delete_failed_profile, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -247,7 +247,7 @@ public class EditProfileActivity extends LanguageActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(EditProfileActivity.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditProfileActivity.this, R.string.failed_load_data, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -259,7 +259,7 @@ public class EditProfileActivity extends LanguageActivity {
         String gender = spinnerGender.getSelectedItem().toString();
 
         if (firstName.isEmpty() || lastName.isEmpty() || ageStr.isEmpty()) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.fill_all_fields, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -276,10 +276,10 @@ public class EditProfileActivity extends LanguageActivity {
 
         userRef.updateChildren(updates).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                Toast.makeText(EditProfileActivity.this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditProfileActivity.this, R.string.profile_updated_success, Toast.LENGTH_SHORT).show();
                 finish();
             } else {
-                Toast.makeText(EditProfileActivity.this, "Failed to update profile", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditProfileActivity.this, R.string.profile_updated_failed, Toast.LENGTH_SHORT).show();
             }
         });
     }

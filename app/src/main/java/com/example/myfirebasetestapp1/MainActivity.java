@@ -136,7 +136,7 @@ public class MainActivity extends LanguageActivity implements View.OnClickListen
                 if (mAuth.getCurrentUser() != null) {
                     startActivity(new Intent(this, EditProfileActivity.class));
                 } else {
-                    Toast.makeText(this, "Please login first", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.please_login_first, Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
@@ -170,7 +170,7 @@ public class MainActivity extends LanguageActivity implements View.OnClickListen
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(MainActivity.this, "Error loading posts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, R.string.error_loading_posts, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -254,7 +254,7 @@ public class MainActivity extends LanguageActivity implements View.OnClickListen
                                 progressDialog.dismiss();
                                 if (task.isSuccessful()) {
                                     etQuickPost.setText("");
-                                    Toast.makeText(MainActivity.this, "Posted!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, R.string.posted_success, Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }

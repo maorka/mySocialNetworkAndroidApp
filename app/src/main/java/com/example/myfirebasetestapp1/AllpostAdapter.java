@@ -195,9 +195,9 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
                         DatabaseReference postRef = FirebaseDatabase.getInstance().getReference("Posts").child(temp.key);
                         postRef.removeValue().addOnCompleteListener(task -> {
                             if (task.isSuccessful()) {
-                                Toast.makeText(context, "Post deleted", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, R.string.post_deleted_success, Toast.LENGTH_SHORT).show();
                             } else {
-                                Toast.makeText(context, "Failed to delete post", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, R.string.post_deleted_failed, Toast.LENGTH_SHORT).show();
                             }
                         });
                         return true;
@@ -358,7 +358,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(context, "Failed to load comments.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.failed_load_comments, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -375,7 +375,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
             btnSendComment.setOnClickListener(v -> {
                 String commentText = etComment.getText().toString().trim();
                 if (commentText.isEmpty()) {
-                    Toast.makeText(context, "Cannot send an empty comment.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.empty_comment_error, Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -385,7 +385,7 @@ public class AllpostAdapter extends ArrayAdapter<Post> {
                 if (commentId != null) {
                     commentsRef.child(commentId).setValue(newComment)
                             .addOnSuccessListener(aVoid -> etComment.setText(""))
-                            .addOnFailureListener(e -> Toast.makeText(context, "Failed to send comment.", Toast.LENGTH_SHORT).show());
+                            .addOnFailureListener(e -> Toast.makeText(context, R.string.failed_send_comment, Toast.LENGTH_SHORT).show());
                 }
             });
         }

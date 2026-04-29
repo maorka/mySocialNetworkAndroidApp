@@ -68,7 +68,7 @@ public class EditPostActivity extends LanguageActivity implements View.OnClickLi
 
         String postKey = getIntent().getStringExtra("POST_KEY");
         if (postKey == null) {
-            Toast.makeText(this, "Error: Post key not found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.error_post_key_not_found, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -100,7 +100,7 @@ public class EditPostActivity extends LanguageActivity implements View.OnClickLi
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(EditPostActivity.this, "Failed to load post.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(EditPostActivity.this, R.string.failed_load_post, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -129,7 +129,7 @@ public class EditPostActivity extends LanguageActivity implements View.OnClickLi
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openImagePicker();
             } else {
-                Toast.makeText(this, "Camera permission is required to use the camera", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.camera_permission_required, Toast.LENGTH_SHORT).show();
                 // We can still open the picker, but camera option might not work or we just open gallery
                 openImagePicker();
             }
@@ -190,10 +190,10 @@ public class EditPostActivity extends LanguageActivity implements View.OnClickLi
 
             postRef.setValue(currentPost).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    Toast.makeText(EditPostActivity.this, "Post updated successfully", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditPostActivity.this, R.string.post_updated_success, Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    Toast.makeText(EditPostActivity.this, "Failed to update post", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(EditPostActivity.this, R.string.post_updated_failed, Toast.LENGTH_SHORT).show();
                 }
             });
         }
